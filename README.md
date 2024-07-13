@@ -3,13 +3,13 @@
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=st079&label=Profile%20views&color=0e75b6&style=flat" alt="st079" /> </p>
 
-<p align="left"> <a href="https://twitter.com/@tamang30666" target="blank"><img src="https://img.shields.io/twitter/follow/@tamang30666?logo=twitter&style=for-the-badge" alt="@tamang30666" /></a> </p>
-
 <h3 align="left">Connect with me:</h3>
 <p align="left">
 <a href="https://twitter.com/@tamang30666" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/twitter.svg" alt="@tamang30666" height="30" width="40" /></a>
 <a href="https://linkedin.com/in/sujantamang80" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="sujantamang80" height="30" width="40" /></a>
+<a href="https://fb.com/sujan.tmg.77736310" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/facebook.svg" alt="sujan.tmg.77736310" height="30" width="40" /></a>
 <a href="https://instagram.com/s_u_z_a_n_y_b_a" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/instagram.svg" alt="s_u_z_a_n_y_b_a" height="30" width="40" /></a>
+<a href="https://www.youtube.com/c/@suzan_yba" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/youtube.svg" alt="@suzan_yba" height="30" width="40" /></a>
 </p>
 
 <h3 align="left">Languages and Tools:</h3>
