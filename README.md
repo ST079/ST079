@@ -1,6 +1,8 @@
 [![MasterHead](https://mir-s3-cdn-cf.behance.net/project_modules/fs/54b6c068097599.5b50bca476b9b.gif)](https://ST079.io)
 <h1 align="center">{ Namaste🙏 : "I'm Sujan Tamang" }</h1>
 <h3 align="center">Developer from Nepal</h3>
+<p>I’m Sujan Tamang — a creative frontend developer with a love for building beautiful, functional interfaces. Whether it’s designing seamless user journeys or diving into new frameworks, I thrive at the intersection of code and creativity. Let’s build something amazing!
+</p>
 <img align="right" alt="Coding" width="400" src="https://media1.tenor.com/images/cd37fa49c983ac905df0016fd5b6a2ee/tenor.gif?itemid=13165216">
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=st079&label=Profile%20views&color=0e75b6&style=flat" alt="st079" /> </p>
