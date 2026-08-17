@@ -34,25 +34,15 @@ I like understanding how things work under the hood, writing clean code, and slo
 <br>
 
 **Backend:** C# · ASP.NET Core · GraphQL (HotChocolate) · REST APIs · Entity Framework Core
+<br>
 **Databases:** PostgreSQL · MongoDB · Redis
+<br>
 **Frontend:** React · Next.js · TypeScript · Tailwind CSS
+<br>
 **Other:** Docker · Clean Architecture · Domain-Driven Design
 
 <br>
 
-## 📊 GitHub Stats
-
-<div align="center">
-
-<img height="165" src="https://github-readme-stats.vercel.app/api?username=ST079&show_icons=true&theme=nord_dark&bg_color=0F172A&title_color=38BDF8&icon_color=FFFFFFF&text_color=94A3B8&border_color=1E293B" />
-<img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=ST079&layout=compact&theme=nord_dark&bg_color=0F172A&title_color=38BDF8&text_color=FFFFFFF&border_color=1E293B" />
-<br>
-
-<img src="https://github-readme-streak-stats.herokuapp.com/?user=ST079&theme=nord_dark&background=0F172A&border=1E293B&ring=38BDF8&fire=38BDF8&currStreakLabel=38BDF8" />
-
-</div>
-
-<br>
 
 ## 📬 Let's Connect
 
