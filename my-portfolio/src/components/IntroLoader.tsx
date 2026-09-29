@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
-import Loader from "./Loader";
+import Loader from "../ui/Loader";
 
 const IntroLoader = () => {
   const [isLoading, setIsLoading] = useState(true);
