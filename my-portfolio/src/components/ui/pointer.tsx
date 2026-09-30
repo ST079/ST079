@@ -13,7 +13,7 @@ export const Pointer: React.FC<PointerProps> = ({
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const [visible, setVisible] = React.useState(false);
   const pointerRef = React.useRef<HTMLDivElement>(null);
-  const parentRef = React.useRef<HTMLElement | null>(null);
+  const parentRef = React.useRef<HTMLDivElement | null>(null);
 
   // Set up mouse tracking on parent element
   React.useEffect(() => {
