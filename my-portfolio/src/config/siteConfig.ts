@@ -2,7 +2,7 @@
 // Centralize all configurable items here for easy maintenance
 export const siteConfig = {
   // Site metadata (used in <head> and for SEO)
-  siteTitle: 'ST079',
+  siteTitle: 'Sujan Tamang | Software Developer',
   siteDescription: 'ST079 Portfolio',
 
   // Author information
@@ -25,7 +25,7 @@ export const siteConfig = {
         // Icon: GithubIcon (imported separately in component)
       },
       {
-        href: 'https://linkedin.com/in/st079', // Update this to your actual LinkedIn profile
+        href: 'https://linkedin.com/in/sujantamang80', // Update this to your actual LinkedIn profile
         label: 'LinkedIn',
         // Icon: LinkedInIcon (imported separately in component)
       }
