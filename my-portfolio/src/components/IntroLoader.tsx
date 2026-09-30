@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import Loader from "../ui/Loader";
+import siteConfig from "../config/siteConfig";
 
 const IntroLoader = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +50,11 @@ const IntroLoader = () => {
             }}
           >
             <Loader />
+            {siteConfig.loader.showText && (
+              <p className="mt-4 text-center text-white text-sm">
+                {siteConfig.loader.text}
+              </p>
+            )}
           </motion.div>
         </motion.div>
       )}
