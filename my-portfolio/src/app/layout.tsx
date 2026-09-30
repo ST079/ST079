@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
-import IntroLoader from "@/src/components/IntroLoader";
 import siteConfig from "@/src/config/siteConfig";
-import { SitePointer } from "@/src/components/SitePointer";
+import IntroGate from "@/src/components/IntroGate";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: siteConfig.siteTitle,
@@ -21,10 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body>
-        {/* <SitePointer/> */}
-
-        <IntroLoader />
-        {children}
+        <IntroGate>{children}</IntroGate>
       </body>
     </html>
   );

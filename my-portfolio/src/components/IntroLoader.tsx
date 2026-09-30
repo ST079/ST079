@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
@@ -5,11 +6,14 @@ import { useEffect, useState } from "react";
 import Loader from "../ui/Loader";
 import siteConfig from "../config/siteConfig";
 
-const IntroLoader = () => {
+interface IntroLoaderProps {
+  onComplete: () => void;
+}
+
+const IntroLoader = ({ onComplete }: IntroLoaderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Give the text time to become fully visible
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 3500);
@@ -18,7 +22,9 @@ const IntroLoader = () => {
   }, []);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence
+      onExitComplete={onComplete}
+    >
       {isLoading && (
         <motion.div
           className="fixed inset-0 z-999 flex items-center justify-center bg-black"
@@ -50,8 +56,9 @@ const IntroLoader = () => {
             }}
           >
             <Loader />
+
             {siteConfig.loader.showText && (
-              <p className="mt-4 text-center text-white text-sm">
+              <p className="mt-4 text-center text-sm text-white">
                 {siteConfig.loader.text}
               </p>
             )}
