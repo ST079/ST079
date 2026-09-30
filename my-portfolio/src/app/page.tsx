@@ -1,6 +1,31 @@
 import React from "react";
 import { NavigationDock } from "../components/sections/NavigationDock";
 import { Highlighter } from "@/components/ui/highlighter";
+import LogoLoop from "../ui/LogoLoop";
+
+import {
+  SiSharp,
+  SiDotnet,
+  SiPostgresql,
+  SiDocker,
+  SiRedis,
+} from "react-icons/si";
+
+const techLogos = [
+  {
+    node: <SiSharp />,
+    title: "C#",
+    href: "https://learn.microsoft.com/en-us/dotnet/csharp/",
+  },
+  { node: <SiDotnet />, title: ".NET", href: "https://dotnet.microsoft.com/" },
+  {
+    node: <SiPostgresql />,
+    title: "PostgreSQL",
+    href: "https://www.postgresql.org/",
+  },
+  { node: <SiDocker />, title: "Docker", href: "https://www.docker.com/" },
+  { node: <SiRedis />, title: "Redis", href: "https://redis.io/" },
+];
 
 const page = () => {
   return (
@@ -8,7 +33,8 @@ const page = () => {
       <NavigationDock />
 
       {/* Hero Section */}
-      <section className="flex min-h-screen items-center justify-center px-6">
+      <section className="flex min-h-screen flex-col items-center justify-center px-6">
+        {/* Hero Content */}
         <div className="max-w-3xl text-center">
           <p className="mb-4 text-sm text-muted-foreground">
             Hi, I'm Sujan Tamang
@@ -33,13 +59,18 @@ const page = () => {
             C# · .NET · PostgreSQL · Docker · OpenTelemetry
           </p>
         </div>
-      </section>
 
-      
-      <section></section>
+        {/* Full Width Tech Stack */}
+        <div className="mt-16 w-screen">
+          <h3 className="mb-4 text-center text-lg font-medium text-foreground">
+            Tech Stack
+          </h3>
+
+          <LogoLoop className="w-full" logos={techLogos} />
+        </div>
+      </section>
     </>
   );
 };
 
 export default page;
-

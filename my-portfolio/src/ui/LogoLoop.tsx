@@ -1,3 +1,4 @@
+"use client";
 import React, {
   useCallback,
   useEffect,
@@ -209,16 +210,16 @@ const useAnimationLoop = (
 export const LogoLoop = React.memo<LogoLoopProps>(
   ({
     logos,
-    speed = 120,
+    speed = 30,
     direction = "left",
     width = "100%",
-    logoHeight = 28,
-    gap = 32,
+    logoHeight = 80,
+    gap = 40,
     pauseOnHover,
     hoverSpeed,
     fadeOut = false,
     fadeOutColor,
-    scaleOnHover = false,
+    scaleOnHover = true,
     renderItem,
     ariaLabel = "Partner logos",
     className,
