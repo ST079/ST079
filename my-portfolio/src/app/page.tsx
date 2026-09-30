@@ -1,8 +1,14 @@
 import React from "react";
 import LogoLoop from "../ui/LogoLoop";
+import { NavigationDock } from "../components/sections/NavigationDock";
 
 const page = () => {
-  return <div>page</div>;
+  return (
+    <>
+      <NavigationDock />
+      <div>page</div>;
+    </>
+  );
 };
 
 export default page;
