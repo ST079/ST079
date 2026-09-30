@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
-import IntroLoader from "../components/IntroLoader";
-import { NavigationDock } from "../components/sections/NavigationDock";
-import siteConfig from "../config/siteConfig";
+import IntroLoader from "@/src/components/IntroLoader";
+import siteConfig from "@/src/config/siteConfig";
+import { SitePointer } from "@/src/components/SitePointer";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -21,6 +21,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body>
+        {/* <SitePointer/> */}
+
         <IntroLoader />
         {children}
       </body>

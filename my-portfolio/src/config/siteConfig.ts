@@ -41,7 +41,10 @@ export const siteConfig = {
   },
 
   // Accessibility titles
-  socialLinksTitle: 'Social Media Links'
+  socialLinksTitle: 'Social Media Links',
+
+  // UI colors
+  pointerColor: 'blue-500'
 };
 
 export default siteConfig;
