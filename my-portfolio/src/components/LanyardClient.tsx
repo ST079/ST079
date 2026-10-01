@@ -1,8 +1,7 @@
 "use client";
 
 import Lanyard from "@/components/Lanyard";
-import frontImage from "@/src/assets/lanyard/frontEnhanded.png";
-import backImage from "@/src/assets/lanyard/backEnhanced.png";
+import siteConfig from "@/src/config/siteConfig";
 
 export default function LanyardClient() {
   return (
@@ -10,8 +9,8 @@ export default function LanyardClient() {
       position={[0, 0, 20]}
       gravity={[0, -40, 0]}
       lanyardWidth={0.5}
-      frontImage={frontImage.src}
-      backImage={backImage.src}
+      frontImage={siteConfig.lanyard.frontImage}
+      backImage={siteConfig.lanyard.backImage}
     />
   );
 }

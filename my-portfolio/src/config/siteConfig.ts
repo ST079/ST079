@@ -1,3 +1,6 @@
+import frontImage from "@/src/assets/lanyard/frontEnhanded.png";
+import backImage from "@/src/assets/lanyard/backEnhanced.png";
+
 // Site-wide configuration for the portfolio
 // Centralize all configurable items here for easy maintenance
 export const siteConfig = {
@@ -14,7 +17,6 @@ export const siteConfig = {
     sections: [
       { id: 'home', label: 'Home' },
       { id: 'projects', label: 'Projects' },
-      { id: 'about', label: 'About' },
       { id: 'contact', label: 'Contact' }
     ],
     // External links (social media, etc.)
@@ -44,7 +46,13 @@ export const siteConfig = {
   socialLinksTitle: 'Social Media Links',
 
   // UI colors
-  pointerColor: 'blue-500'
+  pointerColor: 'blue-500',
+
+  // Lanyard configuration
+  lanyard: {
+    frontImage: frontImage.src,
+    backImage: backImage.src
+  }
 };
 
 export default siteConfig;
