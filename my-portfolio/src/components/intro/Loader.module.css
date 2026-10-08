@@ -1,0 +1,40 @@
+.loader {
+  width: fit-content;
+
+  font-size: clamp(5rem, 15vw, 12rem);
+  font-family: system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+
+  color: transparent;
+
+  background:
+    radial-gradient(0.71em at 50% 1em, white 99%, transparent 101%)
+      calc(50% - 1em) 1em / 2em 200% repeat-x text,
+    radial-gradient(0.71em at 50% -0.5em, transparent 99%, white 101%) 50%
+      1.5em / 2em 200% repeat-x text;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  animation:
+    wave-x 0.8s linear infinite alternate,
+    wave-y 4s linear infinite;
+}
+
+.loader::before {
+  content: "ST079";
+}
+
+@keyframes wave-x {
+  to {
+    background-position-x: 50%, calc(50% + 1em);
+  }
+}
+
+@keyframes wave-y {
+  to {
+    background-position-y: -0.5em, 0;
+  }
+}

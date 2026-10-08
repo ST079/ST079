@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import "./globals.css";
 import { Geist } from "next/font/google";
+
+import IntroGate from "@/components/intro/IntroGate";
+import siteConfig from "@/config/site";
 import { cn } from "@/lib/utils";
-import siteConfig from "@/src/config/siteConfig";
-import IntroGate from "@/src/components/IntroGate";
+import "./globals.css";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -11,8 +12,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: siteConfig.siteTitle,
-  description: siteConfig.siteDescription,
+  title: siteConfig.title,
+  description: siteConfig.description,
 };
 
 export default function RootLayout({
