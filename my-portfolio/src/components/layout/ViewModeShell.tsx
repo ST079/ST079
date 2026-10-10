@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CarFront } from "lucide-react";
 
 export type ViewMode = "city" | "classic";
@@ -36,6 +37,10 @@ export default function ViewModeShell({ children }: { children: ReactNode }) {
     style.overflow = "hidden";
     return () => {
       style.overflow = previous;
+      // The page scrolls again (and may have gained a scrollbar, which narrows
+      // it), so let the scroll-linked effects, like the pinned Experience
+      // section, measure it afresh.
+      requestAnimationFrame(() => ScrollTrigger.refresh());
     };
   }, [mode]);
 

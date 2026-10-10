@@ -17,10 +17,9 @@ The site has two views. It opens in a small 3D town modelled on Bhaktapur Durbar
 ### The classic page
 
 - **Intro overlay**: an animated "ST079" loader that wipes away to reveal the site.
-- **Horizontal scroll (lg+)**: GSAP ScrollTrigger pins the hero and About panels and slides them sideways.
 - **3D lanyard badge**: React Three Fiber and Rapier physics. Visitors can drag the card. It loads lazily and only on large screens.
 - **"How I work" band**: a short statement whose words light up as you scroll through it (GSAP SplitText).
-- **Experience timeline**: a line that fills as you scroll past each role.
+- **Sideways experience**: the roles sit as cards in a row along a timeline. On large screens GSAP ScrollTrigger pins the section while you scroll down, the cards slide past and the timeline fills. On smaller or short screens, or with reduced motion, the row scrolls sideways by swipe or trackpad instead.
 - **Projects**: category filters with animated re-layout, and cards that tilt and light up under the cursor.
 - **Skills playground**: the skills drop as physics bodies (matter-js) that can be thrown around.
 - **Momo, the sidekick**: a small animated character that sits on the heading of the section you're reading and hops over to the next heading as you scroll. Once that heading scrolls off the top, Momo waits at the side of the screen, peeking at the page, until the next heading comes into view. It greets visitors, comments on each section the first time it lands there, follows the mouse with its eyes, naps when nobody's around, and gives tips when clicked. Visitors can hide it for the rest of their visit.
@@ -83,8 +82,8 @@ my-portfolio/
 │   │   ├── icons/            # Brand SVG icons (GitHub, LinkedIn)
 │   │   ├── intro/            # Intro overlay: IntroGate, IntroLoader, Loader
 │   │   ├── lanyard/          # 3D badge (Lanyard) + lazy, desktop-only wrapper
-│   │   ├── layout/           # ViewModeShell (town/classic switch), HorizontalScroll, NavigationDock
-│   │   ├── sections/         # Classic page sections, the "How I work" band, skills playground, timeline
+│   │   ├── layout/           # ViewModeShell (town/classic switch), NavigationDock
+│   │   ├── sections/         # Classic page sections, the "How I work" band, sideways Experience, skills playground
 │   │   ├── sidekick/         # Momo: character (momo.avatar.json), behaviour, and the Perch spots on headings
 │   │   ├── ui/               # Reusable primitives (dock, tooltip, falling-text, tilt-card, …)
 │   │   ├── Highlight.tsx     # Highlighter that waits for the intro to finish
@@ -97,6 +96,7 @@ my-portfolio/
 │   │   ├── use-active-section.ts  # Which section is on screen (for the dock and Momo)
 │   │   └── use-media-query.ts     # Live CSS media query match
 │   └── lib/
+│       ├── scroll-to-section.ts  # Smooth jumps to a section (used by the dock and hero)
 │       └── utils.ts          # `cn()` class-name helper
 ├── components.json           # shadcn/ui config (aliases match the folders above)
 ├── LICENSE                   # GNU AGPL v3
@@ -135,7 +135,7 @@ my-portfolio/
 ## Notes
 
 - This project uses **Next.js 16**, whose APIs differ from older versions. Check `node_modules/next/dist/docs/` before relying on older patterns (see `AGENTS.md`).
-- The horizontal scroll, the lanyard and the dock's scroll-to-panel behaviour only run at `min-width: 1024px` (Tailwind's `lg`). Below that the classic page scrolls normally.
+- The pinned Experience section needs a screen at least 1024px wide (Tailwind's `lg`) and 700px tall. The lanyard only runs at `lg` and up.
 - With `prefers-reduced-motion`, the marquee stops, the "How I work" words show fully lit, the skills show as plain chips, the cards don't tilt, and Momo holds still.
 
 ## License

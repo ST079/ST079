@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { scrollToSection } from "@/components/layout/HorizontalScroll";
+import { scrollToSection } from "@/lib/scroll-to-section";
 import siteConfig from "@/config/site";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { useMediaQuery } from "@/hooks/use-media-query";

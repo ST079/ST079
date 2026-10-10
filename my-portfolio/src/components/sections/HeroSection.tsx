@@ -7,12 +7,12 @@ import siteConfig from "@/config/site";
 import { techStack } from "@/config/tech-stack";
 import HeroActions from "./HeroActions";
 
-// Panel 1: intro text on the left, the 3D lanyard hanging from the top on the right.
+// The hero: intro text on the left, the 3D lanyard hanging from the top on the right.
 export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative flex min-h-screen flex-col overflow-x-clip lg:h-screen lg:w-screen lg:shrink-0 lg:flex-row"
+      className="relative flex min-h-screen flex-col overflow-x-clip lg:h-screen lg:flex-row"
     >
       {/* On phones the extra top space keeps the heading (and Momo's greeting
           above it) clear of the floating "Drive through Bhaktapur" button. */}

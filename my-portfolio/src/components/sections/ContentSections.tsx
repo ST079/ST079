@@ -1,25 +1,14 @@
 import ContactContent from "@/components/content/ContactContent";
 import EducationContent from "@/components/content/EducationContent";
-import ExperienceContent from "@/components/content/ExperienceContent";
 import ProjectsContent from "@/components/content/ProjectsContent";
 import SkillsContent from "@/components/content/SkillsContent";
-import ScrollTimeline from "./ScrollTimeline";
 import Section from "./Section";
 import SkillsPlayground from "./SkillsPlayground";
 
 // The classic page's vertical sections. Their bodies are the same components
 // the town shows in its panels (src/components/content), plus a few
-// classic-only interactive pieces.
-
-export function ExperienceSection() {
-  return (
-    <Section id="experience" eyebrow="Experience" title="Where I've been building">
-      <ScrollTimeline>
-        <ExperienceContent />
-      </ScrollTimeline>
-    </Section>
-  );
-}
+// classic-only interactive pieces. Experience has its own sideways layout, in
+// ExperienceSection.tsx.
 
 export function ProjectsSection() {
   return (

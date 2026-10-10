@@ -241,8 +241,8 @@ function Companion({ onHide }: { onHide: () => void }) {
   }, [active]);
 
   // Track how much of each heading's spot is on screen (below the floating
-  // button). IntersectionObserver also accounts for the sideways panels and
-  // for anything that clips them.
+  // button). IntersectionObserver also accounts for pinned sections and for
+  // anything that clips them.
   useEffect(() => {
     const s = state.current;
     const observer = new IntersectionObserver(

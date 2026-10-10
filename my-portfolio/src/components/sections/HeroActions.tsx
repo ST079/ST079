@@ -2,7 +2,7 @@
 
 import { ArrowDown, CarFront } from "lucide-react";
 
-import { scrollToSection } from "@/components/layout/HorizontalScroll";
+import { scrollToSection } from "@/lib/scroll-to-section";
 import { useViewMode } from "@/components/layout/ViewModeShell";
 
 /** The hero's call-to-action buttons. */
