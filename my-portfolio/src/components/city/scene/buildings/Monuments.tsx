@@ -3,6 +3,7 @@
 import { HILL, LANDMARKS, type Solid } from "../../layout";
 import { Box, Frustum, mat, PALETTE } from "../parts";
 import GoldenGate from "./GoldenGate";
+import GateGuards from "./Guards";
 import { Guardian, PagodaTiers, Pinnacle } from "./pagoda";
 import { GalleryWing, GateWall } from "./Palace";
 import { SwayambhuHill } from "./Swayambhu";
@@ -147,6 +148,7 @@ export default function Monuments() {
       <Place solid={LANDMARKS.goldenGate}>
         <GoldenGate />
       </Place>
+      <GateGuards />
       <Place solid={LANDMARKS.bell} rotation={Math.PI / 2}>
         <TalejuBell />
       </Place>
