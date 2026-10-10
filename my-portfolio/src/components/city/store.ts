@@ -9,7 +9,8 @@ import { destinationById, START, type DestinationId, type Vec2 } from "./layout"
 // car is parked, where it's driving, which car you picked) goes through a tiny
 // subscribable store.
 
-export type VehicleId = "hatchback" | "taxi" | "jeep" | "tempo";
+export const VEHICLE_IDS = ["hatchback", "taxi", "jeep", "tempo", "motorbike", "bicycle"] as const;
+export type VehicleId = (typeof VEHICLE_IDS)[number];
 
 export interface CityState {
   /** Destination the car is parked at; its panel is open unless dismissed. */
@@ -67,6 +68,8 @@ export const car = {
   steer: 0,
   /** Metres left on the current route, for the HUD. */
   remaining: 0,
+  /** Distance driven so far; spins the wheels and a cyclist's pedals. */
+  travelled: 0,
 };
 
 export const MIN_ZOOM = 0.6;
@@ -93,10 +96,8 @@ export function chooseVehicle(vehicle: VehicleId) {
 
 export function restoreVehicle() {
   try {
-    const saved = localStorage.getItem(VEHICLE_KEY);
-    if (saved === "hatchback" || saved === "taxi" || saved === "jeep" || saved === "tempo") {
-      cityStore.set({ vehicle: saved });
-    }
+    const saved = VEHICLE_IDS.find((id) => id === localStorage.getItem(VEHICLE_KEY));
+    if (saved) cityStore.set({ vehicle: saved });
   } catch {
     // Ignore: fall back to the default car.
   }

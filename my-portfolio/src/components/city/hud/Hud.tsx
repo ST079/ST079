@@ -90,10 +90,10 @@ function Welcome() {
           >
             <X className="size-4" />
           </button>
-          <p className="pr-6 text-base font-semibold">Namaste, welcome to Bhaktapur.</p>
+          <p className="pr-6 text-base font-semibold">Namaste, welcome to the valley.</p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            My portfolio is a drive through Durbar Square. Each landmark holds a part of it: pick one
-            below and the car takes you there{touch ? "." : ", or drive yourself."}
+            My portfolio is a drive from Bhaktapur Durbar Square to Swayambhunath. Each landmark holds a
+            part of it: pick one below and the car takes you there{touch ? "." : ", or drive yourself."}
           </p>
           {!touch && (
             <p className="mt-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
@@ -265,7 +265,7 @@ export default function Hud({ onExit }: { onExit: () => void }) {
 
       {wide && (
         <div className="absolute bottom-24 left-5">
-          <Minimap width={176} />
+          <Minimap width={240} />
         </div>
       )}
 

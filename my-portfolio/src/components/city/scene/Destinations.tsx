@@ -5,24 +5,25 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
 import * as THREE from "three";
 
-import { destinations, LANDMARKS, type Destination, type DestinationId, type Solid } from "../layout";
+import { destinations, HILL, LANDMARKS, type Destination, type DestinationId, type Vec2 } from "../layout";
 import { cityStore, driveTo } from "../store";
-import GoldenGate from "./buildings/GoldenGate";
 import NewaHome from "./buildings/NewaHome";
 import Nyatapola from "./buildings/Nyatapola";
 import Palace from "./buildings/Palace";
-import TalejuBell from "./buildings/TalejuBell";
-import Vatsala from "./buildings/Vatsala";
+import { GreatStupa, PrayerWheelWall, VajraStairway } from "./buildings/Swayambhu";
 
 // Each destination's landmark, where it stands, and which way its front faces
 // (buildings are modelled facing +z; rotations turn them towards their spot).
-const BUILDINGS: Record<DestinationId, { Model: ComponentType; solid: Solid; rotation: number }> = {
-  about: { Model: NewaHome, solid: LANDMARKS.home, rotation: Math.PI / 2 }, // faces east
-  experience: { Model: Palace, solid: LANDMARKS.palace, rotation: 0 }, // faces south
-  projects: { Model: Nyatapola, solid: LANDMARKS.nyatapola, rotation: -Math.PI / 2 }, // faces west
-  skills: { Model: Vatsala, solid: LANDMARKS.vatsala, rotation: -Math.PI / 2 }, // faces west
-  education: { Model: GoldenGate, solid: LANDMARKS.goldenGate, rotation: 0 }, // faces south
-  contact: { Model: TalejuBell, solid: LANDMARKS.bell, rotation: Math.PI / 2 }, // faces east
+// Swayambhunath's stairway and stupa are laid out from the hill's centre.
+const BUILDINGS: Record<DestinationId, { Model: ComponentType; at: Vec2; rotation: number }> = {
+  // Bhaktapur
+  about: { Model: NewaHome, at: LANDMARKS.home.center, rotation: Math.PI / 2 }, // faces east
+  experience: { Model: Palace, at: LANDMARKS.palace.center, rotation: 0 }, // faces south
+  projects: { Model: Nyatapola, at: LANDMARKS.nyatapola.center, rotation: -Math.PI / 2 }, // faces west
+  // Swayambhunath
+  skills: { Model: VajraStairway, at: HILL.center, rotation: 0 }, // climbs the east side
+  education: { Model: GreatStupa, at: HILL.center, rotation: 0 },
+  contact: { Model: PrayerWheelWall, at: LANDMARKS.prayerWheels.center, rotation: Math.PI }, // faces north
 };
 
 /** A soft painted circle where the car parks; it brightens while parked there. */
@@ -51,7 +52,7 @@ function Spot({ d }: { d: Destination }) {
 function Place({ d }: { d: Destination }) {
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
-  const { Model, solid, rotation } = BUILDINGS[d.id];
+  const { Model, at, rotation } = BUILDINGS[d.id];
 
   const go = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -61,7 +62,7 @@ function Place({ d }: { d: Destination }) {
   return (
     <>
       <group
-        position={[solid.center[0], 0, solid.center[1]]}
+        position={[at[0], 0, at[1]]}
         rotation-y={rotation}
         onClick={go}
         onPointerOver={(e) => {
@@ -77,7 +78,7 @@ function Place({ d }: { d: Destination }) {
   );
 }
 
-/** The six portfolio landmarks and their parking spots (signs: see ../signs.tsx). */
+/** The six portfolio landmarks, three in each place, and their parking spots (signs: see ../signs.tsx). */
 export default function Destinations() {
   return (
     <>

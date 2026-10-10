@@ -6,6 +6,7 @@ import * as THREE from "three";
 
 import { destinationById, solids } from "../layout";
 import { car, cityStore, view, zoomBy } from "../store";
+import { vehicleById } from "./vehicles";
 
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
@@ -100,14 +101,16 @@ export default function CameraRig({ ready }: { ready: boolean }) {
     r.zoom = THREE.MathUtils.damp(r.zoom, view.zoom, 5, dt);
     const zoom = r.zoom * (portrait ? 1.3 : 1);
 
-    const { active, dismissed } = cityStore.get();
+    const { active, dismissed, vehicle } = cityStore.get();
     const parked = active !== null && Math.abs(car.speed) < 0.6;
     const panelOpen = active !== null && active !== dismissed;
+    // Closer in behind the smaller rides (bikes), so they don't look tiny.
+    const chase = vehicleById[vehicle].chase ?? 1;
 
     // Behind the car by default; parked, look from the car towards the building.
     let yaw = car.heading;
-    let distance = (14 + Math.abs(car.speed) * 0.25) * zoom;
-    let height = 6.8 * zoom;
+    let distance = (14 + Math.abs(car.speed) * 0.25) * zoom * chase;
+    let height = 6.8 * zoom * chase;
     let aheadDistance = 9;
     let aheadHeight = 2.6;
     if (parked && active) {
@@ -116,11 +119,11 @@ export default function CameraRig({ ready }: { ready: boolean }) {
       const dz = d.center[1] - car.z;
       const span = Math.hypot(dx, dz);
       yaw = Math.atan2(dx, dz);
-      distance = Math.min(11 + span * 0.6, 13) * zoom;
-      height = (4 + d.signHeight * 0.25) * zoom;
+      distance = (d.frame?.distance ?? Math.min(11 + span * 0.6, 13)) * zoom;
+      height = (d.frame?.height ?? 4 + d.signHeight * 0.25) * zoom;
       // Aim most of the way to the building, a third of the way up it.
       aheadDistance = span * 0.7;
-      aheadHeight = d.signHeight * 0.3;
+      aheadHeight = d.frame?.look ?? d.signHeight * 0.3;
     }
     r.yaw += wrapAngle(yaw - r.yaw) * (1 - Math.exp(-dt * (parked ? 1.6 : 3.2)));
 

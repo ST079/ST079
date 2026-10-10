@@ -1,17 +1,36 @@
-// The town's map: a small take on Bhaktapur Durbar Square and Taumadhi Square.
-// Plain data and maths, no React: destinations, landmarks, the row houses that
-// enclose the squares, collision shapes, and the path graph the car's
-// autopilot follows.
+// The town's map: Bhaktapur Durbar Square (with Taumadhi Square beside it) and,
+// a drive west along a road, Swayambhunath on its hill. Each place carries half
+// of the portfolio. Plain data and maths, no React: destinations, landmarks,
+// the row houses that enclose the squares, collision shapes, and the path
+// graph the car's autopilot follows.
 //
 // Coordinates are [x, z] on the ground; -z is north (towards the palace and
-// the Himalayas). Brick-paved open areas:
-//   Durbar Square   x -46..46, z -20..20
-//   Taumadhi Square x  27..79, z  36..80
-//   a wide street south to the Newa home, and a lane south-east to Taumadhi.
+// the Himalayas). Paved open areas:
+//   Durbar Square   x  -46..46,  z -20..20
+//   Taumadhi Square x   27..79,  z  36..80
+//   a wide street south to the Newa home, and a lane south-east to Taumadhi
+//   the road west   x  -97..-46, z  -4..8
+//   Swayambhunath   x -166..-90, z -36..40, round the hill
 
 export type Vec2 = [number, number];
 
 export type DestinationId = "about" | "experience" | "projects" | "skills" | "education" | "contact";
+
+export type AreaId = "bhaktapur" | "swayambhu";
+
+/** The two places in town, in the order the tour visits them. */
+export const AREAS: Record<AreaId, { name: string; short: string }> = {
+  bhaktapur: { name: "Bhaktapur Durbar Square", short: "Bhaktapur" },
+  swayambhu: { name: "Swayambhunath", short: "Swayambhu" },
+};
+
+/**
+ * Swayambhunath's hill: its centre, its radius at the foot and on top, and the
+ * height of the stone-paved top where the stupa stands.
+ */
+export const HILL = { center: [-128, 2] as Vec2, radius: 25, topRadius: 13.5, height: 12.2 };
+/** Half-size of the square ring road round the hill. */
+const RING = 31;
 
 export interface Destination {
   id: DestinationId;
@@ -19,6 +38,8 @@ export interface Destination {
   section: string;
   /** The landmark, e.g. "Nyatapola Temple". */
   place: string;
+  /** Which of the two places it's in. */
+  area: AreaId;
   color: string;
   /** Where the car parks: a node of the path graph. */
   spot: Vec2;
@@ -26,13 +47,23 @@ export interface Destination {
   center: Vec2;
   /** Height of the floating sign. */
   signHeight: number;
+  /**
+   * How the camera frames it on arrival, when the default (worked out from
+   * the sign's height) doesn't suit: camera height, the height it aims at,
+   * and optionally how far back it sits.
+   */
+  frame?: { height: number; look: number; distance?: number };
 }
 
+const [hx, hz] = HILL.center;
+
 export const destinations: Destination[] = [
+  // Bhaktapur
   {
     id: "about",
     section: "About",
     place: "Newa Home",
+    area: "bhaktapur",
     color: "#e07a5f",
     spot: [-13, 46],
     center: [-28.5, 46],
@@ -42,6 +73,7 @@ export const destinations: Destination[] = [
     id: "experience",
     section: "Experience",
     place: "55-Window Palace",
+    area: "bhaktapur",
     color: "#3d5a80",
     spot: [-19, -15],
     center: [-19, -26],
@@ -51,37 +83,46 @@ export const destinations: Destination[] = [
     id: "projects",
     section: "Projects",
     place: "Nyatapola Temple",
+    area: "bhaktapur",
     color: "#2a9d8f",
     spot: [39.5, 58],
     center: [53, 58],
     signHeight: 28,
   },
+  // Swayambhunath: the stairway up the east side, the stupa on top, and the
+  // prayer wheels along the north foot of the hill.
   {
     id: "skills",
     section: "Skills",
-    place: "Vatsala Durga Temple",
+    place: "Vajra Stairway",
+    area: "swayambhu",
     color: "#e9a23b",
-    spot: [-1, -6],
-    center: [10, -6],
-    signHeight: 18.5,
+    spot: [hx + RING, hz],
+    center: [hx + 11.5, hz], // the vajra at the top of the stairs
+    signHeight: 19,
+    frame: { height: 9, look: 8.5 }, // up the stairs, spire and all
   },
   {
     id: "education",
     section: "Education",
-    place: "Golden Gate",
+    place: "Swayambhu Stupa",
+    area: "swayambhu",
     color: "#7c6fd6",
-    spot: [17, -15],
-    center: [17, -22.5],
-    signHeight: 12.5,
+    spot: [hx, hz + RING],
+    center: [hx, hz],
+    signHeight: 29,
+    frame: { height: 20, look: 15 }, // from up high, over the trees on the slope
   },
   {
     id: "contact",
     section: "Contact",
-    place: "Taleju Bell",
+    place: "Prayer Wheels",
+    area: "swayambhu",
     color: "#d64545",
-    spot: [32, -6],
-    center: [26, -6],
-    signHeight: 9.5,
+    spot: [hx, hz - RING],
+    center: [hx, hz - 25.5],
+    signHeight: 6,
+    frame: { height: 9, look: 5, distance: 5 }, // close in, clear of the houses behind
   },
 ];
 
@@ -103,15 +144,26 @@ export const START = { x: 4, z: 12, heading: Math.PI };
 /** Keep to the left of the path while driving (as in Nepal). */
 export const LANE_OFFSET = 1.2;
 
-/** The car can't leave this box. */
-export const BOUNDS = { minX: -52, maxX: 84, minZ: -24, maxZ: 84 };
+export type Rect = [minX: number, maxX: number, minZ: number, maxZ: number];
 
-/** Brick-paved open ground, as [minX, maxX, minZ, maxZ]. */
-export const PAVED: [number, number, number, number][] = [
-  [-46, 46, -20, 20], // Durbar Square
-  [27, 79, 36, 80], // Taumadhi Square
-  [-23, -3, 20, 62], // street to the Newa home
-  [27, 37, 20, 36], // lane to Taumadhi
+/** The road west from Durbar Square to Swayambhunath. */
+export const ROAD: Rect = [-97, -46, -4, 8];
+
+/** Where the car can go: the old town, the road, and the square round the hill. */
+export const DRIVABLE: Rect[] = [
+  [-52, 84, -24, 84], // Bhaktapur
+  ROAD,
+  [hx - 38, hx + 38, hz - 38, hz + 38], // Swayambhunath
+];
+
+/** Paved open ground. Indices matter: the townsfolk keep to one area each. */
+export const PAVED: Rect[] = [
+  [-46, 46, -20, 20], // 0 Durbar Square
+  [27, 79, 36, 80], // 1 Taumadhi Square
+  [-23, -3, 20, 62], // 2 street to the Newa home
+  [27, 37, 20, 36], // 3 lane to Taumadhi
+  [hx - 38, hx + 38, hz - 38, hz + 38], // 4 Swayambhunath, round the hill
+  ROAD, // 5
 ];
 
 // ---------------------------------------------------------------------------
@@ -142,7 +194,22 @@ export const LANDMARKS = {
   bhairabnath: { center: [68, 46], size: [10, 7], height: 13 },
   // Down the lane
   home: { center: [-28.5, 46], size: [9, 9], height: 13 },
+  // Swayambhunath: the stupa on the hilltop, the foot of the east stairway
+  // (where it sticks out past the hill), and the prayer wheels at the north foot
+  stupa: { center: [hx, hz], size: [13.6, 13.6], height: HILL.height + 14.5 },
+  stairway: { center: [hx + 25.4, hz], size: [2.4, 3.6], height: 2.6 },
+  prayerWheels: { center: [hx, hz - 25.5], size: [16, 1.4], height: 2.9 },
 } satisfies Record<string, Solid>;
+
+/**
+ * The hill, for collisions: three overlapping boxes that together roughly
+ * fill its round foot (the car only knows about boxes).
+ */
+const HILL_SOLIDS: Solid[] = [
+  { center: HILL.center, size: [HILL.radius * 2, HILL.radius * 0.83], height: HILL.height },
+  { center: HILL.center, size: [HILL.radius * 0.83, HILL.radius * 2], height: HILL.height },
+  { center: HILL.center, size: [HILL.radius * 1.42, HILL.radius * 1.42], height: HILL.height },
+];
 
 // ---------------------------------------------------------------------------
 // Row houses enclosing the squares and lanes
@@ -178,6 +245,8 @@ interface Row {
   /** Which side of the line the houses stand on. */
   outward: 1 | -1;
   skip?: [number, number][];
+  /** Share of whitewashed (plaster) houses; the rest are brick. */
+  plaster?: number;
 }
 
 const ROWS: Row[] = [
@@ -197,6 +266,12 @@ const ROWS: Row[] = [
   { axis: "z", at: 36, from: 46, to: 79, outward: -1 },
   { axis: "x", at: 79, from: 36, to: 80, outward: 1 },
   { axis: "z", at: 80, from: 27, to: 79, outward: 1 },
+  // Swayambhunath: monasteries and shops round the square, mostly whitewashed.
+  // (Added last, so the houses above keep their looks.)
+  { axis: "z", at: hz - 38, from: hx - 38, to: hx + 38, outward: -1, plaster: 0.6 },
+  { axis: "z", at: hz + 38, from: hx - 38, to: hx + 38, outward: 1, plaster: 0.6 },
+  { axis: "x", at: hx - 38, from: hz - 38, to: hz + 38, outward: -1, plaster: 0.6 },
+  { axis: "x", at: hx + 38, from: hz - 38, to: hz + 38, outward: 1, plaster: 0.6 },
 ];
 
 const BRICK_WALLS = ["#9c4630", "#a34d35", "#8f3f2b", "#ab553b", "#96432f"];
@@ -219,7 +294,7 @@ function buildHouses() {
       const height = 7 + Math.floor(rand() * 3) * 2.6 + rand() * 0.8;
       const across = row.at + (row.outward * depth) / 2;
       const along = t + width / 2;
-      const plaster = rand() < 0.18;
+      const plaster = rand() < (row.plaster ?? 0.18);
       houses.push({
         center: row.axis === "x" ? [across, along] : [along, across],
         size: row.axis === "x" ? [depth, width] : [width, depth],
@@ -237,7 +312,11 @@ function buildHouses() {
   return houses;
 }
 
-export const houses = buildHouses();
+const overlaps = (center: Vec2, size: Vec2, [x0, x1, z0, z1]: Rect) =>
+  center[0] + size[0] / 2 > x0 && center[0] - size[0] / 2 < x1 && center[1] + size[1] / 2 > z0 && center[1] - size[1] / 2 < z1;
+
+// The road runs out through a gap in the houses at both ends.
+export const houses = buildHouses().filter((h) => !overlaps(h.center, h.size, ROAD));
 
 /** Staircases that reach out beyond their temple's footprint. */
 const STAIRS: Solid[] = [
@@ -250,6 +329,7 @@ const STAIRS: Solid[] = [
 export const solids: Solid[] = [
   ...Object.values(LANDMARKS),
   ...STAIRS,
+  ...HILL_SOLIDS,
   ...houses.map((h) => ({ center: h.center, size: h.size, height: h.height })),
 ];
 
@@ -266,8 +346,12 @@ export function isOpen(x: number, z: number, margin = 1) {
 // Scenery outside the town
 // ---------------------------------------------------------------------------
 
-/** The brick-paved town area, as [minX, maxX, minZ, maxZ]. */
-export const TOWN_AREA: [number, number, number, number] = [-60, 94, -40, 96];
+/** The brick-paved area of Bhaktapur. */
+export const TOWN_AREA: Rect = [-60, 94, -40, 96];
+/** The stone-paved square round Swayambhunath's hill, houses included. */
+export const SWAYAMBHU_AREA: Rect = [hx - 48, hx + 48, hz - 48, hz + 48];
+/** The stretch of road through the fields between the two. */
+export const ROAD_AREA: Rect = [SWAYAMBHU_AREA[1], TOWN_AREA[0], ROAD[2], ROAD[3]];
 
 export interface Tree {
   position: Vec2;
@@ -278,10 +362,12 @@ export interface Tree {
 function buildTrees() {
   const rand = seeded(79);
   const trees: Tree[] = [];
-  while (trees.length < 160) {
-    const x = -150 + rand() * 330;
+  const near = ([x0, x1, z0, z1]: Rect, x: number, z: number, margin: number) =>
+    x > x0 - margin && x < x1 + margin && z > z0 - margin && z < z1 + margin;
+  while (trees.length < 200) {
+    const x = -230 + rand() * 410;
     const z = -130 + rand() * 300;
-    if (x > TOWN_AREA[0] - 4 && x < TOWN_AREA[1] + 4 && z > TOWN_AREA[2] - 4 && z < TOWN_AREA[3] + 4) continue;
+    if (near(TOWN_AREA, x, z, 4) || near(SWAYAMBHU_AREA, x, z, 4) || near(ROAD_AREA, x, z, 3)) continue;
     trees.push({ position: [x, z], scale: 1 + rand() * 0.9, kind: rand() < 0.6 ? 0 : 1 });
   }
   return trees;
@@ -294,22 +380,33 @@ export const trees = buildTrees();
 // ---------------------------------------------------------------------------
 
 const node = {
+  // Bhaktapur
   n1: [-40, -15],
   n2: destinationById.experience.spot,
   n3: [-1, -15],
-  n4: destinationById.education.spot,
+  n4: [17, -15], // in front of the Golden Gate
   n5: [32, -15],
   s1: [-40, 15],
   s2: [-13, 15],
   s3: [-1, 15],
   s4: [32, 15],
-  m1: destinationById.skills.spot,
-  e1: destinationById.contact.spot,
+  m1: [-1, -6], // beside Vatsala
+  e1: [32, -6], // beside the Taleju bell
   t1: [32, 58],
   b1: destinationById.projects.spot,
   b2: [32, 74],
   a1: destinationById.about.spot,
   a2: [-13, 56],
+  // The road west, and the ring road round Swayambhu's hill
+  w1: [-40, 2],
+  re: destinationById.skills.spot,
+  rne: [hx + RING, hz - RING],
+  rn: destinationById.contact.spot,
+  rnw: [hx - RING, hz - RING],
+  rw: [hx - RING, hz],
+  rsw: [hx - RING, hz + RING],
+  rs: destinationById.education.spot,
+  rse: [hx + RING, hz + RING],
 } satisfies Record<string, Vec2>;
 
 type NodeName = keyof typeof node;
@@ -318,11 +415,14 @@ type NodeName = keyof typeof node;
 const LINKS: [NodeName, NodeName][] = [
   ["n1", "n2"], ["n2", "n3"], ["n3", "n4"], ["n4", "n5"], // along the palace front
   ["s1", "s2"], ["s2", "s3"], ["s3", "s4"], // along the south side of the square
-  ["n1", "s1"], // west side
+  ["n1", "w1"], ["w1", "s1"], // west side
   ["n3", "m1"], ["m1", "s3"], // through the middle, past Vatsala
   ["n5", "e1"], ["e1", "s4"], // east side, past the bell
   ["s4", "t1"], ["t1", "b2"], ["t1", "b1"], // lane to Taumadhi, and a spur up to Nyatapola
   ["s2", "a1"], ["a1", "a2"], // lane to the Newa home
+  ["w1", "re"], // the road to Swayambhunath, arriving at the foot of the stairs
+  ["re", "rne"], ["rne", "rn"], ["rn", "rnw"], ["rnw", "rw"], // round the hill...
+  ["rw", "rsw"], ["rsw", "rs"], ["rs", "rse"], ["rse", "re"],
 ];
 
 const names = Object.keys(node) as NodeName[];

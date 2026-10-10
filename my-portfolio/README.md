@@ -2,17 +2,17 @@
 
 Personal portfolio site for **Sujan Tamang**, a junior backend engineer working with C#, .NET, GraphQL, PostgreSQL and Kafka.
 
-The site has two views. It opens in a small 3D town modelled on Bhaktapur Durbar Square, where visitors drive a car to landmarks that each hold a part of the portfolio. One click switches to the classic page, a scrolling site with the same content and a few interactive extras.
+The site has two views. It opens in a small 3D town, a drive from Bhaktapur Durbar Square to Swayambhunath, where visitors drive to landmarks that each hold a part of the portfolio. One click switches to the classic page, a scrolling site with the same content and a few interactive extras.
 
 ## Features
 
 ### The town (first view)
 
 - **Drive or take the autopilot**: WASD or the arrow keys drive and Space brakes. Clicking a place in the destination bar, or pressing 1 to 6, drives there automatically.
-- **Landmarks as sections**: About, Experience, Projects, Skills, Education and Contact each live at a landmark, such as the 55-Window Palace or Nyatapola. Arriving opens that section in a panel. Escape closes it and E reopens it.
-- **Garage**: pick a hatchback, taxi, jeep or tempo. The choice is remembered.
+- **Two places, three sections each**: Bhaktapur Durbar Square carries About (a Newa home), Experience (the 55-Window Palace) and Projects (Nyatapola). A road west leads to Swayambhunath, a stupa on a wooded hill, which carries Skills (the stairway up to the giant vajra), Education (the stupa) and Contact (the prayer wheels). Arriving opens that section in a panel. Escape closes it and E reopens it.
+- **Garage**: pick a hatchback, taxi, jeep, Safa tempo, motorbike or bicycle. The two-wheelers turn tighter and lean into bends, and the cyclist pedals. The choice is remembered.
 - **Chase camera and minimap**: the camera follows behind the car and avoids clipping into buildings. The minimap shows where everything is.
-- **Life on the square**: tourists, cats, dogs and pigeons wander around.
+- **Life on the squares**: tourists, cats, dogs and pigeons wander around, and Swayambhunath has its monkeys.
 
 ### The classic page
 
@@ -21,7 +21,7 @@ The site has two views. It opens in a small 3D town modelled on Bhaktapur Durbar
 - **"How I work" band**: a short statement whose words light up as you scroll through it (GSAP SplitText).
 - **Sideways experience**: the roles sit as cards in a row along a timeline. On large screens GSAP ScrollTrigger pins the section while you scroll down, the cards slide past and the timeline fills. On smaller or short screens, or with reduced motion, the row scrolls sideways by swipe or trackpad instead.
 - **Projects**: category filters with animated re-layout, and cards that tilt and light up under the cursor.
-- **Skills playground**: the skills drop as physics bodies (matter-js) that can be thrown around.
+- **Skills playground**: the tools drop as logo tiles in their brand colours, physics bodies (matter-js) you can grab and throw around.
 - **Momo, the sidekick**: a small animated character that sits on the heading of the section you're reading and hops over to the next heading as you scroll. Once that heading scrolls off the top, Momo waits at the side of the screen, peeking at the page, until the next heading comes into view. It greets visitors, comments on each section the first time it lands there, follows the mouse with its eyes, naps when nobody's around, and gives tips when clicked. Visitors can hide it for the rest of their visit.
 - **Navigation dock**: a magnifying dock that highlights the section on screen.
 - **Tech stack marquee**: an infinitely scrolling strip of logos in the hero.
@@ -136,7 +136,7 @@ my-portfolio/
 
 - This project uses **Next.js 16**, whose APIs differ from older versions. Check `node_modules/next/dist/docs/` before relying on older patterns (see `AGENTS.md`).
 - The pinned Experience section needs a screen at least 1024px wide (Tailwind's `lg`) and 700px tall. The lanyard only runs at `lg` and up.
-- With `prefers-reduced-motion`, the marquee stops, the "How I work" words show fully lit, the skills show as plain chips, the cards don't tilt, and Momo holds still.
+- With `prefers-reduced-motion`, the marquee stops, the "How I work" words show fully lit, the logo tiles sit still, the cards don't tilt, and Momo holds still.
 
 ## License
 

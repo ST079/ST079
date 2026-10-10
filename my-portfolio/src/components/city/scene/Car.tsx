@@ -5,9 +5,9 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 import {
-  BOUNDS,
   destinationById,
   destinations,
+  DRIVABLE,
   LANE_OFFSET,
   planRoute,
   solids,
@@ -16,12 +16,10 @@ import {
 } from "../layout";
 import { car, cityStore, takeDriveRequest, useCity } from "../store";
 import { mat } from "./parts";
-import { vehicleById } from "./vehicles";
+import { vehicleById, type WheelSpec } from "./vehicles";
 
-// Handling
-const WHEELBASE = 2.3;
+// Handling (wheelbase, top speed and size come from the vehicle)
 const MAX_STEER = 0.55;
-const MAX_SPEED = 16;
 const MAX_REVERSE = 6;
 const ACCEL = 13;
 const BRAKE = 28;
@@ -29,7 +27,8 @@ const DRAG = 3.5;
 // Autopilot
 const AUTO_SPEED = 16;
 const AUTO_DECEL = 12;
-const CAR_RADIUS = 1.5;
+/** How far a two-wheeler leans into a turn, at most (radians). */
+const MAX_LEAN = 0.5;
 
 /** Parking within this distance of a spot (and slowly) opens its panel. */
 const PARK_RADIUS = 4.2;
@@ -131,8 +130,8 @@ function useKeys() {
   return keys;
 }
 
-/** Push the car out of houses, temples and the edge of town. */
-function collide() {
+/** Push the car (of the given radius) out of houses and temples, and back onto the paving. */
+function collide(radius: number) {
   let hit = false;
   for (const { center, size } of solids) {
     const hx = size[0] / 2;
@@ -142,25 +141,39 @@ function collide() {
     const dx = car.x - cx;
     const dz = car.z - cz;
     const d = Math.hypot(dx, dz);
-    if (d >= CAR_RADIUS) continue;
+    if (d >= radius) continue;
     hit = true;
     if (d > 1e-4) {
-      car.x = cx + (dx / d) * CAR_RADIUS;
-      car.z = cz + (dz / d) * CAR_RADIUS;
+      car.x = cx + (dx / d) * radius;
+      car.z = cz + (dz / d) * radius;
     } else {
       // Centre inside the box: leave by the nearest side.
       const ox = hx - Math.abs(car.x - center[0]);
       const oz = hz - Math.abs(car.z - center[1]);
-      if (ox < oz) car.x = center[0] + Math.sign(car.x - center[0] || 1) * (hx + CAR_RADIUS);
-      else car.z = center[1] + Math.sign(car.z - center[1] || 1) * (hz + CAR_RADIUS);
+      if (ox < oz) car.x = center[0] + Math.sign(car.x - center[0] || 1) * (hx + radius);
+      else car.z = center[1] + Math.sign(car.z - center[1] || 1) * (hz + radius);
     }
   }
-  const x = clamp(car.x, BOUNDS.minX, BOUNDS.maxX);
-  const z = clamp(car.z, BOUNDS.minZ, BOUNDS.maxZ);
-  if (x !== car.x || z !== car.z) {
+  // Stay in the drivable areas: if outside all of them, come back to the
+  // nearest point of the nearest one.
+  let nearest: [number, number] | null = null;
+  let nearestDistance = Infinity;
+  for (const [x0, x1, z0, z1] of DRIVABLE) {
+    const x = clamp(car.x, x0, x1);
+    const z = clamp(car.z, z0, z1);
+    const d = Math.hypot(car.x - x, car.z - z);
+    if (d === 0) {
+      nearest = null;
+      break;
+    }
+    if (d < nearestDistance) {
+      nearestDistance = d;
+      nearest = [x, z];
+    }
+  }
+  if (nearest) {
     hit = true;
-    car.x = x;
-    car.z = z;
+    [car.x, car.z] = nearest;
   }
   return hit;
 }
@@ -178,14 +191,52 @@ function nearestDestination() {
   return { id: best, distance: bestDistance };
 }
 
+/** A tyre on its spinner: solid for cars and the motorbike, spoked for the bicycle. */
+function Wheel({ spec }: { spec: WheelSpec }) {
+  const width = spec.width ?? 0.28;
+  const side = spec.x >= 0 ? 1 : -1;
+  if (spec.spoked) {
+    return (
+      <>
+        <mesh rotation-y={Math.PI / 2} material={mat("#22252b", 0.9)} castShadow>
+          <torusGeometry args={[spec.radius - 0.03, 0.035, 8, 28]} />
+        </mesh>
+        <mesh rotation-z={Math.PI / 2} material={mat("#d7dce2", 0.5)}>
+          <cylinderGeometry args={[0.05, 0.05, 0.1, 10]} />
+        </mesh>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <mesh key={i} rotation-x={(i * Math.PI) / 6} material={mat("#c4cad2", 0.5)}>
+            <boxGeometry args={[0.012, (spec.radius - 0.05) * 2, 0.012]} />
+          </mesh>
+        ))}
+      </>
+    );
+  }
+  return (
+    <>
+      <mesh rotation-z={Math.PI / 2} material={mat("#22252b", 0.9)} castShadow>
+        <cylinderGeometry args={[spec.radius, spec.radius, width, 18]} />
+      </mesh>
+      <mesh position-x={side * (width / 2 + 0.005)} rotation-z={Math.PI / 2} material={mat("#d7dce2", 0.5)}>
+        <cylinderGeometry args={[spec.radius * 0.52, spec.radius * 0.52, 0.02, 14]} />
+      </mesh>
+      <mesh position-x={side * (width / 2 + 0.02)} material={mat("#8d96a3", 0.5)}>
+        <boxGeometry args={[0.02, spec.radius * 0.9, 0.07]} />
+      </mesh>
+    </>
+  );
+}
+
 /**
- * The visitor's car. Arrow keys / WASD drive it; Space brakes. Destinations
- * (from the HUD, signs, buildings or clicking the paving) are driven to by an
- * autopilot that follows the paths around the temples, keeping left.
+ * The visitor's car (or bike). Arrow keys / WASD drive it; Space brakes.
+ * Destinations (from the HUD, signs, buildings or clicking the paving) are
+ * driven to by an autopilot that follows the paths around the temples,
+ * keeping left. Two-wheelers lean into their turns.
  */
 export default function Car() {
   const vehicle = vehicleById[useCity((s) => s.vehicle)];
   const root = useRef<THREE.Group>(null!);
+  const lean = useRef<THREE.Group>(null!);
   const body = useRef<THREE.Group>(null!);
   const wheels = useRef<(THREE.Group | null)[]>([]);
   const pivots = useRef<(THREE.Group | null)[]>([]);
@@ -194,7 +245,6 @@ export default function Car() {
   const route = useRef<Route | null>(null);
   const scratch = useRef({
     target: new THREE.Vector2(),
-    travelled: 0,
     stuck: 0,
     reversing: false,
     reverseSide: 1,
@@ -204,6 +254,7 @@ export default function Car() {
     const dt = Math.min(rawDelta, 1 / 30);
     const k = keys.current;
     const s = scratch.current;
+    const { wheelbase, maxSpeed, radius } = vehicle;
 
     // 1. Pick up a new destination from the HUD, a sign or a click.
     const request = takeDriveRequest();
@@ -263,8 +314,8 @@ export default function Car() {
         targetSteer =
           Math.abs(alpha) > Math.PI / 2
             ? Math.sign(alpha) * MAX_STEER
-            : clamp(Math.atan2(2 * WHEELBASE * Math.sin(alpha), Math.max(Math.hypot(dx, dz), 0.1)), -MAX_STEER, MAX_STEER);
-        wanted = Math.min(AUTO_SPEED, Math.sqrt(2 * AUTO_DECEL * Math.max(remaining - 0.4, 0)));
+            : clamp(Math.atan2(2 * wheelbase * Math.sin(alpha), Math.max(Math.hypot(dx, dz), 0.1)), -MAX_STEER, MAX_STEER);
+        wanted = Math.min(AUTO_SPEED, maxSpeed, Math.sqrt(2 * AUTO_DECEL * Math.max(remaining - 0.4, 0)));
         wanted *= clamp(1 - Math.abs(alpha) / 1.4, 0.3, 1);
       }
       const speedingUp = Math.abs(wanted) > Math.abs(car.speed) && wanted * car.speed >= 0;
@@ -280,13 +331,13 @@ export default function Car() {
       }
     } else {
       // 3b. Manual driving.
-      const maxSteer = MAX_STEER * (1 - 0.45 * Math.min(Math.abs(car.speed) / MAX_SPEED, 1));
+      const maxSteer = MAX_STEER * (1 - 0.45 * Math.min(Math.abs(car.speed) / maxSpeed, 1));
       targetSteer = steerInput * maxSteer;
       if (throttle > 0) car.speed += (car.speed < 0 ? BRAKE : ACCEL) * dt;
       else if (throttle < 0) car.speed -= (car.speed > 0 ? BRAKE : ACCEL * 0.6) * dt;
       else car.speed = approach(car.speed, 0, DRAG * dt);
       if (braking) car.speed = approach(car.speed, 0, BRAKE * 1.2 * dt);
-      car.speed = clamp(car.speed, -MAX_REVERSE, MAX_SPEED);
+      car.speed = clamp(car.speed, -MAX_REVERSE, maxSpeed);
 
       // Parking near a destination opens its panel; driving away closes it.
       const near = nearestDestination();
@@ -303,62 +354,62 @@ export default function Car() {
 
     // 4. Move (bicycle model) and resolve collisions.
     car.steer = THREE.MathUtils.damp(car.steer, targetSteer, 10, dt);
-    car.heading += (car.speed / WHEELBASE) * Math.tan(car.steer) * dt;
+    car.heading += (car.speed / wheelbase) * Math.tan(car.steer) * dt;
     car.x += Math.sin(car.heading) * car.speed * dt;
     car.z += Math.cos(car.heading) * car.speed * dt;
-    if (collide()) car.speed *= 1 - Math.min(1, 5 * dt);
+    if (collide(radius)) car.speed *= 1 - Math.min(1, 5 * dt);
 
-    // 5. Visuals: position, wheel spin, steering and a little body roll.
+    // 5. Visuals: position, wheel spin, steering, and a little body roll (or,
+    // on two wheels, a proper lean into the turn).
     root.current.position.set(car.x, 0, car.z);
     root.current.rotation.y = car.heading;
-    s.travelled += car.speed * dt;
+    car.travelled += car.speed * dt;
     wheels.current.forEach((wheel) => {
-      if (wheel) wheel.rotation.x = s.travelled / (wheel.userData.radius as number);
+      if (wheel) wheel.rotation.x = car.travelled / (wheel.userData.radius as number);
     });
     pivots.current.forEach((pivot) => {
       if (pivot) pivot.rotation.y = car.steer;
     });
-    body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, -car.steer * car.speed * 0.01, 6, dt);
+    const roll = -car.steer * car.speed;
+    if (vehicle.twoWheeler) {
+      lean.current.rotation.z = THREE.MathUtils.damp(lean.current.rotation.z, clamp(roll * 0.06, -MAX_LEAN, MAX_LEAN), 6, dt);
+      body.current.rotation.z = 0;
+    } else {
+      lean.current.rotation.z = 0;
+      body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, roll * 0.01, 6, dt);
+    }
   });
 
-  const Body = vehicle.Body;
+  const { Body, Fork } = vehicle;
 
   return (
     <group ref={root} position={[car.x, 0, car.z]} rotation-y={car.heading}>
-      <group ref={body}>
-        <Body />
-      </group>
+      <group ref={lean}>
+        <group ref={body}>
+          <Body />
+        </group>
 
-      {/* Each wheel: steering pivot (front only) > spinner (turns about the axle) > tyre, hub, spoke */}
-      {vehicle.wheels.map((w, i) => {
-        const side = w.x >= 0 ? 1 : -1;
-        return (
+        {/* Each wheel: steering pivot (front only, carrying a bike's fork) > spinner (turns about the axle) > tyre */}
+        {vehicle.wheels.map((w, i) => (
           <group key={`${vehicle.id}-${i}`} position={[w.x, w.radius, w.z]}>
             <group
               ref={(el) => {
                 pivots.current[i] = w.front ? el : null;
               }}
             >
+              {w.front && Fork && <Fork />}
               <group
                 ref={(el) => {
                   wheels.current[i] = el;
                 }}
                 userData={{ radius: w.radius }}
               >
-                <mesh rotation-z={Math.PI / 2} material={mat("#22252b", 0.9)} castShadow>
-                  <cylinderGeometry args={[w.radius, w.radius, 0.28, 18]} />
-                </mesh>
-                <mesh position-x={side * 0.145} rotation-z={Math.PI / 2} material={mat("#d7dce2", 0.5)}>
-                  <cylinderGeometry args={[w.radius * 0.52, w.radius * 0.52, 0.02, 14]} />
-                </mesh>
-                <mesh position-x={side * 0.16} material={mat("#8d96a3", 0.5)}>
-                  <boxGeometry args={[0.02, w.radius * 0.9, 0.07]} />
-                </mesh>
+                <Wheel spec={w} />
               </group>
             </group>
           </group>
-        );
-      })}
+        ))}
+      </group>
     </group>
   );
 }

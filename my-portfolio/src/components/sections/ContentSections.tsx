@@ -29,7 +29,7 @@ export function SkillsSection() {
       id="skills"
       eyebrow="Skills"
       title="Tools of the trade"
-      intro="My stack, ready to play with. The solid chips are what I use every day at work."
+      intro="My stack, ready to play with. The big tiles are what I use every day at work."
     >
       <SkillsPlayground />
       <div className="mt-10">

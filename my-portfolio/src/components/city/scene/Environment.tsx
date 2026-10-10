@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { TOWN_AREA, trees } from "../layout";
+import { ROAD_AREA, SWAYAMBHU_AREA, TOWN_AREA, trees, type Rect } from "../layout";
 import { driveToPoint } from "../store";
 import { mat, PALETTE } from "./parts";
 
@@ -48,6 +48,68 @@ function useBrickTexture() {
     texture.anisotropy = 8;
     return texture;
   }, []);
+}
+
+/** Grey-gold stone flags, for Swayambhunath's square and the road there. */
+function useStoneTexture() {
+  return useMemo(() => {
+    const size = 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#8e8572"; // joints
+    ctx.fillRect(0, 0, size, size);
+
+    const colors = ["#c9bea6", "#bfb399", "#d2c8b2", "#b8ad94", "#c4b89f"];
+    let seed = 23;
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    // Rows of slabs of varying length. Each row's slabs add up to exactly one
+    // tile width and wrap round, so the texture repeats without a seam.
+    const h = 64;
+    for (let y = 0; y < size; y += h) {
+      const widths: number[] = [];
+      let total = 0;
+      while (total < size - 140) {
+        const w = 70 + Math.floor(rand() * 70);
+        widths.push(w);
+        total += w;
+      }
+      if (size - total < 40) widths[widths.length - 1] += size - total;
+      else widths.push(size - total);
+
+      let x = Math.floor(rand() * size); // stagger the rows
+      for (const w of widths) {
+        ctx.fillStyle = colors[Math.floor(rand() * colors.length)];
+        ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+        if (x + w > size) ctx.fillRect(x + 2 - size, y + 2, w - 4, h - 4);
+        x = (x + w) % size;
+      }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    return texture;
+  }, []);
+}
+
+/** A flat paved patch over the fields. Clicking it drives there. */
+function Paving({ area, map, tile, onClick }: { area: Rect; map: THREE.Texture; tile: number; onClick: (e: ThreeEvent<MouseEvent>) => void }) {
+  const [x0, x1, z0, z1] = area;
+  const texture = useMemo(() => {
+    const t = map.clone();
+    t.needsUpdate = true;
+    t.repeat.set((x1 - x0) / tile, (z1 - z0) / tile);
+    return t;
+  }, [map, tile, x0, x1, z0, z1]);
+  return (
+    <mesh rotation-x={-Math.PI / 2} position={[(x0 + x1) / 2, 0, (z0 + z1) / 2]} receiveShadow onClick={onClick}>
+      <planeGeometry args={[x1 - x0, z1 - z0]} />
+      <meshStandardMaterial map={texture} roughness={0.95} />
+    </mesh>
+  );
 }
 
 /** Sky: a soft vertical gradient behind everything. */
@@ -109,13 +171,14 @@ function Hills() {
   const hills = useMemo(
     () =>
       [
-        [-200, 60, 70, 26],
+        [-250, 120, 70, 26],
+        [-280, 10, 80, 34], // behind Swayambhunath
         [-170, 190, 90, 30],
         [-40, 230, 110, 22],
         [120, 220, 90, 28],
         [230, 120, 80, 24],
         [240, -60, 90, 30],
-        [-230, -80, 85, 26],
+        [-260, -140, 85, 26],
         [-120, -190, 70, 20],
         [150, -200, 75, 22],
       ] as [number, number, number, number][],
@@ -191,6 +254,7 @@ function Trees() {
 /** Ground, sky, mountains and outskirts. Clicking the paving drives the car there. */
 export default function Environment() {
   const brick = useBrickTexture();
+  const stone = useStoneTexture();
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > 6) return; // ignore the end of a drag
@@ -213,6 +277,10 @@ export default function Environment() {
         <planeGeometry args={[TOWN.width, TOWN.depth]} />
         <meshStandardMaterial map={brick} roughness={0.95} />
       </mesh>
+
+      {/* Stone flags round Swayambhunath's hill and along the road there */}
+      <Paving area={SWAYAMBHU_AREA} map={stone} tile={6} onClick={onClick} />
+      <Paving area={ROAD_AREA} map={stone} tile={6} onClick={onClick} />
 
       <Trees />
     </>
