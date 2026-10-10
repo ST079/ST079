@@ -2,16 +2,21 @@
 
 import dynamic from "next/dynamic";
 
+import { useViewMode } from "@/components/layout/ViewModeShell";
 import siteConfig from "@/config/site";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 // three.js + rapier are large: load them in a separate client-only chunk.
 const Lanyard = dynamic(() => import("./Lanyard"), { ssr: false });
 
-/** The 3D badge. Only mounted on large screens, where the hero has room for it. */
+/**
+ * The 3D badge. Only mounted on large screens, where the hero has room for
+ * it, and only in the classic view (so it never runs under the town).
+ */
 export default function LanyardClient() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  if (!isDesktop) return null;
+  const { mode } = useViewMode();
+  if (!isDesktop || mode !== "classic") return null;
 
   return (
     <Lanyard

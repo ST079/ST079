@@ -1,7 +1,8 @@
 import type { ComponentType, SVGProps } from "react";
-import { Home, User } from "lucide-react";
+import { Briefcase, FolderGit2, GraduationCap, Home, Layers, Mail, User } from "lucide-react";
 
 import { GithubIcon, LinkedInIcon } from "@/components/icons/social-icons";
+import profile from "@/config/profile";
 import cardFront from "@/assets/lanyard/card-front.png";
 import cardBack from "@/assets/lanyard/card-back.png";
 
@@ -20,29 +21,30 @@ export interface SocialLink {
   icon: Icon;
 }
 
-// Site-wide configuration. Edit content here rather than in the components.
+// Site-wide settings. Personal content (experience, projects, ...) lives in profile.ts.
 export const siteConfig = {
   // <head> metadata
-  title: "Sujan Tamang | Software Developer",
-  description: "ST079 Portfolio",
+  title: `${profile.name} | ${profile.role}`,
+  description: `${profile.name} is a junior backend engineer building APIs and production systems with C#/.NET, GraphQL, PostgreSQL, Kafka and Redis. Drive around his portfolio town or read the classic page.`,
 
-  author: "Sujan Tamang",
+  author: profile.name,
 
   navigation: {
-    // In-page links shown in the dock, in page order.
+    // In-page links shown in the classic view's dock, in page order.
     sections: [
       { id: "home", label: "Home", icon: Home },
       { id: "about", label: "About", icon: User },
+      { id: "experience", label: "Experience", icon: Briefcase },
+      { id: "projects", label: "Projects", icon: FolderGit2 },
+      { id: "skills", label: "Skills", icon: Layers },
+      { id: "education", label: "Education", icon: GraduationCap },
+      { id: "contact", label: "Contact", icon: Mail },
     ] satisfies NavSection[],
 
     // External links, opened in a new tab.
     socials: [
-      { href: "https://github.com/ST079", label: "GitHub", icon: GithubIcon },
-      {
-        href: "https://linkedin.com/in/sujantamang80",
-        label: "LinkedIn",
-        icon: LinkedInIcon,
-      },
+      { href: profile.links.github, label: "GitHub", icon: GithubIcon },
+      { href: profile.links.linkedin, label: "LinkedIn", icon: LinkedInIcon },
     ] satisfies SocialLink[],
 
     // Screen-reader heading for the social links group.
