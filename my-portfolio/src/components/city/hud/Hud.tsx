@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CarFront, Check, LayoutList, Minus, Navigation, Plus, X } from "lucide-react";
+import { CarFront, Check, LayoutList, Minus, Navigation, Plus, Volume2, VolumeX, X } from "lucide-react";
 
 import profile from "@/config/profile";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { townSound } from "../audio";
 import { destinationById, TOUR } from "../layout";
 import { VEHICLES } from "../scene/vehicles";
 import { car, chooseVehicle, cityStore, driveTo, stopDriving, useCity, zoomBy } from "../store";
@@ -105,7 +106,11 @@ function Welcome() {
               <Key>Space</Key>
               <span className="mr-2">brake</span>
               <Key>1</Key>–<Key>6</Key>
-              <span>places</span>
+              <span className="mr-2">places</span>
+              <Key>H</Key>
+              <span className="mr-2">horn</span>
+              <Key>M</Key>
+              <span>sound</span>
             </p>
           )}
           <button
@@ -187,6 +192,26 @@ function Garage() {
   );
 }
 
+/** Sound on/off (remembered). Also the M key. */
+function SoundToggle() {
+  const on = useSyncExternalStore(townSound.subscribe, townSound.isEnabled, () => true);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        townSound.toggle();
+        e.currentTarget.blur();
+      }}
+      aria-pressed={on}
+      aria-label={on ? "Mute sound (M)" : "Turn sound on (M)"}
+      title={on ? "Mute sound (M)" : "Turn sound on (M)"}
+      className="flex size-9 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm ring-1 ring-black/5 backdrop-blur transition-colors hover:bg-white"
+    >
+      {on ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
+    </button>
+  );
+}
+
 function PillButton({
   label,
   onClick,
@@ -213,11 +238,15 @@ function PillButton({
 export default function Hud({ onExit }: { onExit: () => void }) {
   const wide = useMediaQuery("(min-width: 900px)");
 
-  // Esc closes the panel, E re-opens it, 1-6 drive to a destination.
+  // Esc closes the panel, E re-opens it, 1-6 drive to a destination, H sounds
+  // the horn, M mutes.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === "KeyH" && !e.repeat) townSound.horn(cityStore.get().vehicle);
+      if (e.code === "KeyM" && !e.repeat) townSound.toggle();
       const { active, dismissed } = cityStore.get();
       if (e.key === "Escape" && active && dismissed !== active) cityStore.set({ dismissed: active });
       if (e.code === "KeyE" && active && dismissed === active) cityStore.set({ dismissed: null });
@@ -233,7 +262,8 @@ export default function Hud({ onExit }: { onExit: () => void }) {
       {/* Identity */}
       <div className="absolute left-2 top-2 select-none rounded-2xl bg-white/90 px-4 py-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur sm:left-5 sm:top-5">
         <p className="text-sm font-semibold sm:text-base">{profile.name}</p>
-        <p className="text-xs text-muted-foreground sm:text-sm">
+        {/* On narrow phones there's only room for the name beside the controls. */}
+        <p className="text-xs text-muted-foreground max-[420px]:hidden sm:text-sm">
           {profile.role} at {profile.company}
         </p>
       </div>
@@ -251,6 +281,7 @@ export default function Hud({ onExit }: { onExit: () => void }) {
             <Minus className="size-4" />
           </PillButton>
         </div>
+        <SoundToggle />
         <Garage />
         <button
           type="button"

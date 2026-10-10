@@ -13,6 +13,7 @@ The site has two views. It opens in a small 3D town, a drive from Bhaktapur Durb
 - **Garage**: pick a hatchback, taxi, jeep, Safa tempo, motorbike or bicycle. The two-wheelers turn tighter and lean into bends, and the cyclist pedals. The choice is remembered.
 - **Chase camera and minimap**: the camera follows behind the car and avoids clipping into buildings. The minimap shows where everything is.
 - **Life on the squares**: tourists, cats, dogs and pigeons wander around, and Swayambhunath has its monkeys.
+- **Sound**: synthesised with the Web Audio API, no audio files. An engine that climbs through the gears (different for each ride), tyres, a skid on hard braking, a thud on bumping into things, the horn (H), a temple bell or singing bowl on arriving, pigeons taking off, and birds and distant bells. It starts on the first click or key press. The speaker button or M mutes it, and the choice is remembered.
 
 ### The classic page
 

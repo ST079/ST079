@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { HILL, isOpen, LANDMARKS, PAVED, seeded, solids, type Vec2 } from "../layout";
+import { townSound } from "../audio";
 import { car } from "../store";
 
 // Life in the squares: tourists wandering between temples (and a few sitting
@@ -652,7 +653,10 @@ function Pigeons() {
 
     FLOCKS.forEach((flock, f) => {
       const d = Math.hypot(car.x - flock.center[0], car.z - flock.center[1]);
-      if (d < 10 && Math.abs(car.speed) > 1) flight.current[f] = 7 + Math.random() * 3;
+      if (d < 10 && Math.abs(car.speed) > 1) {
+        if (flight.current[f] === 0) townSound.flutter();
+        flight.current[f] = 7 + Math.random() * 3;
+      }
       else flight.current[f] = Math.max(0, flight.current[f] - dt);
     });
 
