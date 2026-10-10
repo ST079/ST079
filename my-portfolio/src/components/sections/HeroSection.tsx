@@ -1,30 +1,35 @@
 import Highlight from "@/components/Highlight";
 import LanyardClient from "@/components/lanyard/LanyardClient";
+import Perch from "@/components/sidekick/Perch";
 import LogoLoop from "@/components/ui/logo-loop";
 import profile from "@/config/profile";
 import siteConfig from "@/config/site";
 import { techStack } from "@/config/tech-stack";
 import HeroActions from "./HeroActions";
 
-// Panel 1: intro text on the left, the 3D lanyard hanging from the top on the right.
+// The hero: intro text on the left, the 3D lanyard hanging from the top on the right.
 export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative flex min-h-screen flex-col overflow-x-clip lg:h-screen lg:w-screen lg:shrink-0 lg:flex-row"
+      className="relative flex min-h-screen flex-col overflow-x-clip lg:h-screen lg:flex-row"
     >
-      <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-6 py-16 lg:items-start lg:py-0 lg:pl-16 lg:pr-[420px]">
+      {/* On phones the extra top space keeps the heading (and Momo's greeting
+          above it) clear of the floating "Drive through Bhaktapur" button. */}
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-6 pt-40 pb-16 sm:py-16 lg:items-start lg:py-0 lg:pl-16 lg:pr-[420px]">
         <div className="max-w-3xl text-center lg:text-left">
           <p className="mb-4 text-sm text-muted-foreground">
             Hi, I&#39;m {siteConfig.author}
           </p>
 
-          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            Junior{" "}
-            <Highlight action="underline" color="#FF9800">
-              Backend Engineer
-            </Highlight>
-          </h1>
+          <Perch section="home" className="mx-auto lg:mx-0">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+              Junior{" "}
+              <Highlight action="underline" color="#FF9800">
+                Backend Engineer
+              </Highlight>
+            </h1>
+          </Perch>
 
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
             I build{" "}

@@ -127,4 +127,9 @@
   html {
     @apply font-sans;
   }
+  /* Tailwind v4 gives buttons the default arrow; clickable things should show a pointer. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }

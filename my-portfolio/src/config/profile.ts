@@ -5,6 +5,8 @@ export interface Project {
   name: string;
   /** Short category line, e.g. "Backend · Microservices". */
   kind: string;
+  /** Used by the project filters. */
+  category: "Backend" | "Full-stack" | "Systems" | "Web";
   summary: string;
   highlights: string[];
   stack: string[];
@@ -94,6 +96,7 @@ export const profile = {
   projects: [
     {
       name: "Microservices with Kafka",
+      category: "Backend",
       kind: "Backend · Event-driven",
       summary:
         "Order and Product services that stay in sync through Kafka, orchestrated with .NET Aspire.",
@@ -109,6 +112,7 @@ export const profile = {
     },
     {
       name: "GraphQL Schema Change Intelligence",
+      category: "Backend",
       kind: "Backend tooling · Proof of concept",
       summary:
         "A CLI that diffs two GraphQL schemas and tells web and mobile teams which of their queries a change will break.",
@@ -124,6 +128,7 @@ export const profile = {
     },
     {
       name: "Nexora",
+      category: "Full-stack",
       kind: "Full-stack · E-commerce",
       summary:
         "A spec-first electronics storefront for the Kathmandu market, running on a REST API I built with Express and MongoDB.",
@@ -143,6 +148,7 @@ export const profile = {
     },
     {
       name: "Influencer Price Calculator",
+      category: "Backend",
       kind: "Backend · GraphQL API",
       summary:
         "A pricing API that helps creators and brands agree on fair rates, using a hybrid CPM + engagement model.",
@@ -158,6 +164,7 @@ export const profile = {
     },
     {
       name: "Build Your Own Shell",
+      category: "Systems",
       kind: "Systems · CodeCrafters challenge",
       summary: "A POSIX-style shell written from scratch in C#.",
       highlights: [
@@ -171,6 +178,7 @@ export const profile = {
     },
     {
       name: "ThriftZaar Nepal",
+      category: "Web",
       kind: "Web app · BCA project",
       summary: "A second-hand clothing marketplace, built for my BCA fourth-semester project.",
       highlights: ["Built with plain HTML, CSS, JavaScript and PHP"],
