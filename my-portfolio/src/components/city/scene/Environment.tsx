@@ -4,12 +4,17 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { trees } from "../layout";
+import { TOWN_AREA, trees } from "../layout";
 import { driveToPoint } from "../store";
 import { mat, PALETTE } from "./parts";
 
-// Town paving covers this box: x -48..74, z -40..76.
-const TOWN = { x: 13, z: 18, width: 122, depth: 116 };
+// Brick paving covers the whole town area.
+const TOWN = {
+  x: (TOWN_AREA[0] + TOWN_AREA[1]) / 2,
+  z: (TOWN_AREA[2] + TOWN_AREA[3]) / 2,
+  width: TOWN_AREA[1] - TOWN_AREA[0],
+  depth: TOWN_AREA[3] - TOWN_AREA[2],
+};
 const BRICK_TILE = 3; // world units per texture repeat
 
 /** Running-bond brick paving, drawn once into a canvas. */

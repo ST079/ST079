@@ -155,7 +155,7 @@ export default function Monuments() {
         <GalleryWing />
       </Place>
       <Place solid={LANDMARKS.gateWall}>
-        <GateWall />
+        <GateWall size={LANDMARKS.gateWall.size as [number, number]} />
       </Place>
     </>
   );

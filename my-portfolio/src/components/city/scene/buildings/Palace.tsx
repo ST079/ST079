@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { Box, mat, PALETTE, Prism } from "../parts";
 
 const WINDOWS = 55;
-const WIDTH = 30;
+const WIDTH = 34;
 
 /** The row of 55 carved windows along the top-floor gallery. */
 function GalleryWindows() {
@@ -35,7 +35,7 @@ function GalleryWindows() {
  * gallery with 55 carved windows on top, and a long tiled roof.
  */
 export default function Palace() {
-  const lowerWindows = Array.from({ length: 9 }, (_, i) => -12 + i * 3);
+  const lowerWindows = Array.from({ length: 11 }, (_, i) => -15 + i * 3);
 
   return (
     <group>
@@ -89,11 +89,11 @@ export function GalleryWing() {
 }
 
 /** A short wall joining the palace to the Golden Gate. */
-export function GateWall() {
+export function GateWall({ size }: { size: [number, number] }) {
   return (
     <group>
-      <Box size={[4, 6, 6.6]} position={[0, 3, 0]} color={PALETTE.brick} />
-      <Box size={[4.4, 0.4, 7]} position={[0, 6.2, 0]} color={PALETTE.tile} />
+      <Box size={[size[0], 6, size[1]]} position={[0, 3, 0]} color={PALETTE.brick} />
+      <Box size={[size[0] + 0.4, 0.4, size[1] + 0.4]} position={[0, 6.2, 0]} color={PALETTE.tile} />
     </group>
   );
 }

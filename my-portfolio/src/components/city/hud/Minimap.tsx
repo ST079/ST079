@@ -6,10 +6,10 @@ import { destinations, houses, LANDMARKS, PAVED } from "../layout";
 import { car, driveTo, driveToPoint, useCity } from "../store";
 
 // World area shown on the map.
-const MIN_X = -48;
-const MAX_X = 74;
-const MIN_Z = -40;
-const MAX_Z = 76;
+const MIN_X = -58;
+const MAX_X = 92;
+const MIN_Z = -36;
+const MAX_Z = 92;
 
 /** A small top-down map. Click a dot to drive there, or anywhere to route to that point. */
 export default function Minimap({ width }: { width: number }) {

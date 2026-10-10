@@ -12,6 +12,7 @@ import Car from "./Car";
 import Destinations from "./Destinations";
 import Environment from "./Environment";
 import Houses from "./Houses";
+import Npcs from "./Npcs";
 import { PALETTE } from "./parts";
 
 // The sun sits south-west and high; its shadow box follows the car.
@@ -64,6 +65,7 @@ export default function Scene({ ready, shadowSize }: SceneProps) {
       <Houses />
       <Monuments />
       <Destinations />
+      <Npcs />
       <Car />
       <CameraRig ready={ready} />
       {/* After the camera rig, so signs follow this frame's camera */}

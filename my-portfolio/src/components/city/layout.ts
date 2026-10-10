@@ -5,9 +5,9 @@
 //
 // Coordinates are [x, z] on the ground; -z is north (towards the palace and
 // the Himalayas). Brick-paved open areas:
-//   Durbar Square   x -36..36, z -16..16
-//   Taumadhi Square x  20..62, z  28..64
-//   a lane south to the Newa home, and a lane south-east to Taumadhi.
+//   Durbar Square   x -46..46, z -20..20
+//   Taumadhi Square x  27..79, z  36..80
+//   a wide street south to the Newa home, and a lane south-east to Taumadhi.
 
 export type Vec2 = [number, number];
 
@@ -34,8 +34,8 @@ export const destinations: Destination[] = [
     section: "About",
     place: "Newa Home",
     color: "#e07a5f",
-    spot: [-14, 34],
-    center: [-24, 34],
+    spot: [-13, 46],
+    center: [-28.5, 46],
     signHeight: 14.5,
   },
   {
@@ -43,8 +43,8 @@ export const destinations: Destination[] = [
     section: "Experience",
     place: "55-Window Palace",
     color: "#3d5a80",
-    spot: [-12, -13.5],
-    center: [-12, -23],
+    spot: [-19, -15],
+    center: [-19, -26],
     signHeight: 19,
   },
   {
@@ -52,8 +52,8 @@ export const destinations: Destination[] = [
     section: "Projects",
     place: "Nyatapola Temple",
     color: "#2a9d8f",
-    spot: [24, 46],
-    center: [41, 46],
+    spot: [39.5, 58],
+    center: [53, 58],
     signHeight: 28,
   },
   {
@@ -61,8 +61,8 @@ export const destinations: Destination[] = [
     section: "Skills",
     place: "Vatsala Durga Temple",
     color: "#e9a23b",
-    spot: [-1, -5],
-    center: [7, -5],
+    spot: [-1, -6],
+    center: [10, -6],
     signHeight: 18.5,
   },
   {
@@ -70,8 +70,8 @@ export const destinations: Destination[] = [
     section: "Education",
     place: "Golden Gate",
     color: "#7c6fd6",
-    spot: [14, -13.5],
-    center: [14, -19.5],
+    spot: [17, -15],
+    center: [17, -22.5],
     signHeight: 12.5,
   },
   {
@@ -79,8 +79,8 @@ export const destinations: Destination[] = [
     section: "Contact",
     place: "Taleju Bell",
     color: "#d64545",
-    spot: [24, -5],
-    center: [18.5, -5],
+    spot: [32, -6],
+    center: [26, -6],
     signHeight: 9.5,
   },
 ];
@@ -98,21 +98,20 @@ export function nextStop(id: DestinationId): Destination {
 }
 
 /** The car starts in Durbar Square, facing the palace. */
-export const START = { x: 3, z: 9, heading: Math.PI };
+export const START = { x: 4, z: 12, heading: Math.PI };
 
 /** Keep to the left of the path while driving (as in Nepal). */
 export const LANE_OFFSET = 1.2;
 
 /** The car can't leave this box. */
-export const BOUNDS = { minX: -44, maxX: 70, minZ: -36, maxZ: 72 };
+export const BOUNDS = { minX: -52, maxX: 84, minZ: -24, maxZ: 84 };
 
 /** Brick-paved open ground, as [minX, maxX, minZ, maxZ]. */
 export const PAVED: [number, number, number, number][] = [
-  [-36, 36, -16, 16], // Durbar Square
-  [20, 62, 28, 64], // Taumadhi Square
-  [-18, -10, 16, 48], // lane to the Newa home
-  [20, 28, 16, 28], // lane to Taumadhi
-  [28, 37, 24, 28], // corner between the lane and Taumadhi
+  [-46, 46, -20, 20], // Durbar Square
+  [27, 79, 36, 80], // Taumadhi Square
+  [-23, -3, 20, 62], // street to the Newa home
+  [27, 37, 20, 36], // lane to Taumadhi
 ];
 
 // ---------------------------------------------------------------------------
@@ -126,19 +125,23 @@ export interface Solid {
 }
 
 export const LANDMARKS = {
-  palace: { center: [-12, -23], size: [30, 12], height: 14 },
-  goldenGate: { center: [14, -19.5], size: [14, 5], height: 10 },
-  gateWall: { center: [5, -20.5], size: [4, 7], height: 7 },
-  gallery: { center: [29, -22.5], size: [12, 11], height: 12 },
-  vatsala: { center: [7, -5], size: [8, 8], height: 16 },
-  bell: { center: [18.5, -5], size: [3.6, 3.6], height: 7 },
-  pashupati: { center: [-9, 4.5], size: [7, 7], height: 12 },
-  chyasilin: { center: [-24, 4], size: [8, 8], height: 9 },
-  fasidega: { center: [31.5, 2], size: [8, 8], height: 14 },
-  column: { center: [-22, -9], size: [1.6, 1.6], height: 9 },
-  nyatapola: { center: [41, 46], size: [13, 13], height: 26 },
-  bhairabnath: { center: [54, 36], size: [10, 7], height: 13 },
-  home: { center: [-24, 34], size: [9, 9], height: 13 },
+  // North side of Durbar Square, fronts along z = -20
+  palace: { center: [-19, -26], size: [34, 12], height: 14 },
+  gateWall: { center: [4, -23], size: [12, 6], height: 7 },
+  goldenGate: { center: [17, -22.5], size: [14, 5], height: 10 },
+  gallery: { center: [30, -25.5], size: [12, 11], height: 12 },
+  // In the square
+  vatsala: { center: [10, -6], size: [8, 8], height: 16 },
+  bell: { center: [26, -6], size: [3.6, 3.6], height: 7 },
+  pashupati: { center: [-12, 6], size: [7, 7], height: 12 },
+  chyasilin: { center: [-30, 5], size: [8, 8], height: 9 },
+  fasidega: { center: [40, 3], size: [8, 8], height: 14 },
+  column: { center: [-26, -8], size: [1.6, 1.6], height: 9 },
+  // Taumadhi Square
+  nyatapola: { center: [53, 58], size: [13, 13], height: 26 },
+  bhairabnath: { center: [68, 46], size: [10, 7], height: 13 },
+  // Down the lane
+  home: { center: [-28.5, 46], size: [9, 9], height: 13 },
 } satisfies Record<string, Solid>;
 
 // ---------------------------------------------------------------------------
@@ -146,7 +149,7 @@ export const LANDMARKS = {
 // ---------------------------------------------------------------------------
 
 /** Deterministic pseudo-random numbers, so the town looks the same every visit. */
-function seeded(seed: number) {
+export function seeded(seed: number) {
   return () => {
     seed = (seed * 16807) % 2147483647;
     return (seed - 1) / 2147483646;
@@ -179,19 +182,21 @@ interface Row {
 
 const ROWS: Row[] = [
   // Durbar Square
-  { axis: "x", at: -36, from: -16, to: 16, outward: -1 },
-  { axis: "x", at: 36, from: -16, to: 16, outward: 1 },
-  { axis: "z", at: 16, from: -36, to: 36, outward: 1, skip: [[-18, -10], [20, 28]] },
-  { axis: "z", at: -16, from: -36, to: -27, outward: -1 },
-  // Lane to the Newa home
-  { axis: "x", at: -18, from: 25, to: 48, outward: -1, skip: [[28.5, 39.5]] },
-  { axis: "x", at: -10, from: 25, to: 48, outward: 1 },
-  { axis: "z", at: 48, from: -18, to: -10, outward: 1 },
+  { axis: "x", at: -46, from: -20, to: 20, outward: -1 },
+  { axis: "x", at: 46, from: -20, to: 20, outward: 1 },
+  { axis: "z", at: 20, from: -46, to: 46, outward: 1, skip: [[-23, -3], [27, 37]] },
+  { axis: "z", at: -20, from: -46, to: -36, outward: -1 },
+  { axis: "z", at: -20, from: 36, to: 46, outward: -1 },
+  // Street to the Newa home
+  { axis: "x", at: -23, from: 29.5, to: 62, outward: -1, skip: [[40.5, 51.5]] },
+  { axis: "x", at: -3, from: 29.5, to: 62, outward: 1 },
+  { axis: "z", at: 62, from: -23, to: -3, outward: 1 },
   // Lane to Taumadhi, and Taumadhi Square
-  { axis: "x", at: 20, from: 25, to: 64, outward: -1 },
-  { axis: "z", at: 28, from: 37, to: 62, outward: -1 },
-  { axis: "x", at: 62, from: 28, to: 64, outward: 1 },
-  { axis: "z", at: 64, from: 20, to: 62, outward: 1 },
+  { axis: "x", at: 27, from: 29.5, to: 80, outward: -1 },
+  { axis: "x", at: 37, from: 29.5, to: 36, outward: 1 },
+  { axis: "z", at: 36, from: 46, to: 79, outward: -1 },
+  { axis: "x", at: 79, from: 36, to: 80, outward: 1 },
+  { axis: "z", at: 80, from: 27, to: 79, outward: 1 },
 ];
 
 const BRICK_WALLS = ["#9c4630", "#a34d35", "#8f3f2b", "#ab553b", "#96432f"];
@@ -236,9 +241,9 @@ export const houses = buildHouses();
 
 /** Staircases that reach out beyond their temple's footprint. */
 const STAIRS: Solid[] = [
-  { center: [32.9, 46], size: [3.2, 3], height: 6 }, // Nyatapola (faces west)
-  { center: [2.2, -5], size: [1.6, 2.2], height: 3 }, // Vatsala Durga (faces west)
-  { center: [31.5, 6.7], size: [1.8, 1.4], height: 4 }, // Fasidega (faces south)
+  { center: [LANDMARKS.nyatapola.center[0] - 8.1, LANDMARKS.nyatapola.center[1]], size: [3.2, 3], height: 6 },
+  { center: [LANDMARKS.vatsala.center[0] - 4.8, LANDMARKS.vatsala.center[1]], size: [1.6, 2.2], height: 3 },
+  { center: [LANDMARKS.fasidega.center[0], LANDMARKS.fasidega.center[1] + 4.7], size: [1.8, 1.4], height: 4 },
 ];
 
 /** Everything the car (and the camera) can bump into. */
@@ -248,9 +253,21 @@ export const solids: Solid[] = [
   ...houses.map((h) => ({ center: h.center, size: h.size, height: h.height })),
 ];
 
+/** True if (x, z) is on open paving, at least `margin` from every building. */
+export function isOpen(x: number, z: number, margin = 1) {
+  const paved = PAVED.some(([x0, x1, z0, z1]) => x > x0 + margin && x < x1 - margin && z > z0 + margin && z < z1 - margin);
+  if (!paved) return false;
+  return !solids.some(
+    (s) => Math.abs(x - s.center[0]) < s.size[0] / 2 + margin && Math.abs(z - s.center[1]) < s.size[1] / 2 + margin,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Scenery outside the town
 // ---------------------------------------------------------------------------
+
+/** The brick-paved town area, as [minX, maxX, minZ, maxZ]. */
+export const TOWN_AREA: [number, number, number, number] = [-60, 94, -40, 96];
 
 export interface Tree {
   position: Vec2;
@@ -261,10 +278,10 @@ export interface Tree {
 function buildTrees() {
   const rand = seeded(79);
   const trees: Tree[] = [];
-  while (trees.length < 140) {
-    const x = -130 + rand() * 280;
-    const z = -110 + rand() * 260;
-    if (x > -52 && x < 80 && z > -44 && z < 82) continue; // the town itself
+  while (trees.length < 160) {
+    const x = -150 + rand() * 330;
+    const z = -130 + rand() * 300;
+    if (x > TOWN_AREA[0] - 4 && x < TOWN_AREA[1] + 4 && z > TOWN_AREA[2] - 4 && z < TOWN_AREA[3] + 4) continue;
     trees.push({ position: [x, z], scale: 1 + rand() * 0.9, kind: rand() < 0.6 ? 0 : 1 });
   }
   return trees;
@@ -277,21 +294,22 @@ export const trees = buildTrees();
 // ---------------------------------------------------------------------------
 
 const node = {
-  n1: [-32, -13.5],
+  n1: [-40, -15],
   n2: destinationById.experience.spot,
-  n3: [-1, -13.5],
+  n3: [-1, -15],
   n4: destinationById.education.spot,
-  n5: [24, -13.5],
-  s1: [-32, 12],
-  s2: [-14, 12],
-  s3: [-1, 12],
-  s4: [24, 12],
+  n5: [32, -15],
+  s1: [-40, 15],
+  s2: [-13, 15],
+  s3: [-1, 15],
+  s4: [32, 15],
   m1: destinationById.skills.spot,
   e1: destinationById.contact.spot,
+  t1: [32, 58],
   b1: destinationById.projects.spot,
-  b2: [24, 58],
+  b2: [32, 74],
   a1: destinationById.about.spot,
-  a2: [-14, 44],
+  a2: [-13, 56],
 } satisfies Record<string, Vec2>;
 
 type NodeName = keyof typeof node;
@@ -303,16 +321,13 @@ const LINKS: [NodeName, NodeName][] = [
   ["n1", "s1"], // west side
   ["n3", "m1"], ["m1", "s3"], // through the middle, past Vatsala
   ["n5", "e1"], ["e1", "s4"], // east side, past the bell
-  ["s4", "b1"], ["b1", "b2"], // lane to Taumadhi and Nyatapola
+  ["s4", "t1"], ["t1", "b2"], ["t1", "b1"], // lane to Taumadhi, and a spur up to Nyatapola
   ["s2", "a1"], ["a1", "a2"], // lane to the Newa home
 ];
 
 const names = Object.keys(node) as NodeName[];
 const nodes: Vec2[] = names.map((n) => node[n] as Vec2);
 const edges: [number, number][] = LINKS.map(([a, b]) => [names.indexOf(a), names.indexOf(b)]);
-
-/** Path lines, for the minimap. */
-export const pathSegments: [Vec2, Vec2][] = edges.map(([a, b]) => [nodes[a], nodes[b]]);
 
 const dist = (a: Vec2, b: Vec2) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 

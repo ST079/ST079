@@ -88,8 +88,8 @@ export default function CameraRig({ ready }: { ready: boolean }) {
     const r = rig.current;
 
     if (!ready) {
-      r.desired.set(46, 52, 74);
-      r.lookTarget.set(4, 0, 4);
+      r.desired.set(58, 62, 92);
+      r.lookTarget.set(6, 0, 6);
       camera.position.copy(r.desired);
       r.look.copy(r.lookTarget);
       camera.lookAt(r.look);
@@ -116,14 +116,16 @@ export default function CameraRig({ ready }: { ready: boolean }) {
       const dz = d.center[1] - car.z;
       const span = Math.hypot(dx, dz);
       yaw = Math.atan2(dx, dz);
-      distance = (11 + span * 0.6) * zoom;
+      distance = Math.min(11 + span * 0.6, 13) * zoom;
       height = (4 + d.signHeight * 0.25) * zoom;
-      aheadDistance = span * 0.45;
-      aheadHeight = d.signHeight * 0.2;
+      // Aim most of the way to the building, a third of the way up it.
+      aheadDistance = span * 0.7;
+      aheadHeight = d.signHeight * 0.3;
     }
     r.yaw += wrapAngle(yaw - r.yaw) * (1 - Math.exp(-dt * (parked ? 1.6 : 3.2)));
 
-    // Make room for the panel: slide sideways on desktop, tilt up on phones.
+    // Make room for the panel: slide sideways on desktop; on phones aim lower
+    // so the landmark sits in the top half, above the bottom sheet.
     r.shift = THREE.MathUtils.damp(r.shift, panelOpen && !portrait ? 1 : 0, 3, dt);
     r.sheet = THREE.MathUtils.damp(r.sheet, panelOpen && portrait ? 1 : 0, 3, dt);
 
@@ -133,11 +135,10 @@ export default function CameraRig({ ready }: { ready: boolean }) {
     const rx = -fz;
     const rz = fx;
     const side = r.shift * distance * 0.38;
-    const back = r.sheet * distance * 0.4;
 
-    const tx = car.x + fx * (aheadDistance - back) + rx * side;
-    const tz = car.z + fz * (aheadDistance - back) + rz * side;
-    r.lookTarget.set(tx, aheadHeight, tz);
+    const tx = car.x + fx * aheadDistance + rx * side;
+    const tz = car.z + fz * aheadDistance + rz * side;
+    r.lookTarget.set(tx, aheadHeight * (1 - r.sheet), tz);
 
     let cx = car.x - fx * distance + rx * side;
     let cz = car.z - fz * distance + rz * side;
