@@ -14,6 +14,7 @@ import {
   type DestinationId,
   type Vec2,
 } from "../layout";
+import { townSound } from "../audio";
 import { car, cityStore, takeDriveRequest, useCity } from "../store";
 import { mat } from "./parts";
 import { vehicleById, type WheelSpec } from "./vehicles";
@@ -248,6 +249,8 @@ export default function Car() {
     stuck: 0,
     reversing: false,
     reverseSide: 1,
+    /** Touching something last frame (so a bump sounds once, not every frame). */
+    touching: false,
   });
 
   useFrame((_, rawDelta) => {
@@ -357,7 +360,10 @@ export default function Car() {
     car.heading += (car.speed / wheelbase) * Math.tan(car.steer) * dt;
     car.x += Math.sin(car.heading) * car.speed * dt;
     car.z += Math.cos(car.heading) * car.speed * dt;
-    if (collide(radius)) car.speed *= 1 - Math.min(1, 5 * dt);
+    const hit = collide(radius);
+    if (hit && !s.touching && Math.abs(car.speed) > 3) townSound.bump(Math.min(Math.abs(car.speed) / 16, 1));
+    s.touching = hit;
+    if (hit) car.speed *= 1 - Math.min(1, 5 * dt);
 
     // 5. Visuals: position, wheel spin, steering, and a little body roll (or,
     // on two wheels, a proper lean into the turn).

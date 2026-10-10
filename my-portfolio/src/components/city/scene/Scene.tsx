@@ -8,6 +8,7 @@ import { SignTracker } from "../signs";
 import { car } from "../store";
 import Monuments from "./buildings/Monuments";
 import CameraRig from "./CameraRig";
+import CitySound from "./CitySound";
 import Car from "./Car";
 import Destinations from "./Destinations";
 import Environment from "./Environment";
@@ -68,6 +69,7 @@ export default function Scene({ ready, shadowSize }: SceneProps) {
       <Npcs />
       <Car />
       <CameraRig ready={ready} />
+      <CitySound />
       {/* After the camera rig, so signs follow this frame's camera */}
       <SignTracker />
     </>
