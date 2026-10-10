@@ -10,14 +10,19 @@ import {
 import { scrollToSection } from "@/components/layout/HorizontalScroll";
 import siteConfig from "@/config/site";
 import { useActiveSection } from "@/hooks/use-active-section";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 const { sections, socials, socialsTitle } = siteConfig.navigation;
 const sectionIds = sections.map((s) => s.id);
 
-/** Floating macOS-style dock: in-page links on the left, socials on the right. */
+/**
+ * Floating macOS-style dock: in-page links on the left, socials on the right.
+ * On phones it shrinks and drops the socials (they're in the Contact section).
+ */
 export default function NavigationDock() {
   const active = useActiveSection(sectionIds);
+  const compact = useMediaQuery("(max-width: 520px)");
 
   return (
     // The wrapper spans the screen, so let clicks pass through it.
@@ -25,8 +30,8 @@ export default function NavigationDock() {
       <TooltipProvider delay={100}>
         <Dock
           className="pointer-events-auto mt-0"
-          iconSize={40}
-          iconMagnification={60}
+          iconSize={compact ? 36 : 40}
+          iconMagnification={compact ? 36 : 60}
           iconDistance={120}
         >
           {sections.map(({ id, label, icon: Icon }) => (
@@ -62,9 +67,9 @@ export default function NavigationDock() {
           ))}
 
           {/* Separator: Dock only injects mouseX into DockIcon children, so this is safe. */}
-          <div className="h-full w-px bg-border" aria-hidden />
+          {!compact && <div className="h-full w-px bg-border" aria-hidden />}
 
-          <div className="relative flex flex-row items-center gap-2">
+          <div className={cn("relative flex flex-row items-center gap-2", compact && "hidden")}>
             <h2 className="sr-only">{socialsTitle}</h2>
             {socials.map(({ href, label, icon: Icon }) => (
               <DockIcon key={href}>

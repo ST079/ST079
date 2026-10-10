@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowUpRight,
   Calculator,
@@ -8,8 +12,13 @@ import {
   Workflow,
 } from "lucide-react";
 
+import TiltCard from "@/components/ui/tilt-card";
 import profile, { type Project } from "@/config/profile";
+import { cn } from "@/lib/utils";
 import { Eyebrow, Tag } from "./shared";
+
+const FILTERS = ["All", "Backend", "Full-stack", "Systems", "Web"] as const;
+type Filter = (typeof FILTERS)[number];
 
 const ICONS = {
   workflow: Workflow,
@@ -25,7 +34,7 @@ function ProjectCard({ project }: { project: Project }) {
   const { color } = project;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-shadow duration-200 hover:shadow-lg">
       {/* Abstract header: no screenshots, just the project's colour and icon */}
       <div
         className="relative h-24 overflow-hidden"
@@ -91,13 +100,50 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export default function ProjectsContent() {
+  const [filter, setFilter] = useState<Filter>("All");
+  const shown = profile.projects.filter((p) => filter === "All" || p.category === filter);
+  const count = (f: Filter) => (f === "All" ? profile.projects.length : profile.projects.filter((p) => p.category === f).length);
+
   return (
-    <div className="@container space-y-8">
-      <div className="grid gap-4 @2xl:grid-cols-2 @5xl:grid-cols-3">
-        {profile.projects.map((project) => (
-          <ProjectCard key={project.name} project={project} />
+    <div className="@container space-y-6">
+      <div role="group" aria-label="Filter projects" className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            type="button"
+            aria-pressed={filter === f}
+            onClick={() => setFilter(f)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors duration-200 pointer-coarse:h-11",
+              filter === f ? "border-foreground bg-foreground text-background" : "bg-background hover:bg-muted",
+            )}
+          >
+            {f}
+            <span className={cn("text-xs tabular-nums", filter === f ? "text-background/70" : "text-muted-foreground")}>
+              {count(f)}
+            </span>
+          </button>
         ))}
       </div>
+
+      <motion.div layout className="grid gap-4 @2xl:grid-cols-2 @5xl:grid-cols-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {shown.map((project) => (
+            <motion.div
+              key={project.name}
+              layout
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <TiltCard className="rounded-2xl" glow={`${project.color}24`}>
+                <ProjectCard project={project} />
+              </TiltCard>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       <div>
         <Eyebrow>More on GitHub</Eyebrow>
