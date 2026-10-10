@@ -142,4 +142,4 @@ my-portfolio/
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
 
-It uses the AGPL because Momo is drawn with [`@bible-strong/avatar-react`](https://www.npmjs.com/package/@bible-strong/avatar-react), which is AGPL-3.0-only. The AGPL asks that anyone who runs a modified copy as a public website offers its visitors the source code. The Contact section links to this repository for that reason.
+It uses the AGPL because Momo is drawn with [`@bible-strong/avatar-react`](https://www.npmjs.com/package/@bible-strong/avatar-react), which is AGPL-3.0-only. The AGPL asks that anyone who runs a modified copy as a public website offers its visitors the source code.

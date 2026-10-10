@@ -7,6 +7,8 @@ const LEVELS = [13, 11.4, 9.8, 8.2, 6.6];
 const STEP = 1.15;
 const TOP = LEVELS.length * STEP;
 const STAIRS = 10;
+/** How far each terrace's stone trim sits below the terrace top. */
+const RIM_DROP = 0.03;
 
 /**
  * Projects: Nyatapola, the five-tiered pagoda of Taumadhi Square, on its
@@ -19,7 +21,15 @@ export default function Nyatapola() {
       {LEVELS.map((size, i) => (
         <group key={size}>
           <Box size={[size, STEP, size]} position={[0, STEP * (i + 0.5), 0]} color={i % 2 ? "#94503a" : "#8a4733"} />
-          <Box size={[size + 0.08, 0.14, size + 0.08]} position={[0, STEP * (i + 1) - 0.07, 0]} color={PALETTE.stone} />
+          {/* Stone trim round the top edge. Its top sits just below the
+              terrace's own top: if the two shared a plane, the GPU couldn't
+              tell which is in front and the terraces would flicker between
+              brick and stone (z-fighting). */}
+          <Box
+            size={[size + 0.08, 0.14, size + 0.08]}
+            position={[0, STEP * (i + 1) - 0.07 - RIM_DROP, 0]}
+            color={PALETTE.stone}
+          />
         </group>
       ))}
 

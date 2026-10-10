@@ -26,8 +26,6 @@ export const profile = {
   links: {
     github: "https://github.com/ST079",
     linkedin: "https://www.linkedin.com/in/sujantamang80",
-    /** This site's source. Required by its AGPL-3.0 licence. */
-    source: "https://github.com/ST079/ST079",
   },
   motto: "Always learning. Always building.",
 
