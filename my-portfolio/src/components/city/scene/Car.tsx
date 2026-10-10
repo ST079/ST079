@@ -2,23 +2,21 @@
 
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 
 import {
-  boxes,
-  circles,
+  BOUNDS,
   destinationById,
   destinations,
-  groundHeight,
   LANE_OFFSET,
   planRoute,
-  WORLD_HALF,
+  solids,
   type DestinationId,
   type Vec2,
 } from "../layout";
-import { car, cityStore, takeDriveRequest } from "../store";
-import { mat, PALETTE } from "./parts";
+import { car, cityStore, takeDriveRequest, useCity } from "../store";
+import { mat } from "./parts";
+import { vehicleById } from "./vehicles";
 
 // Handling
 const WHEELBASE = 2.3;
@@ -31,10 +29,7 @@ const DRAG = 3.5;
 // Autopilot
 const AUTO_SPEED = 13;
 const AUTO_DECEL = 11;
-// Body
 const CAR_RADIUS = 1.5;
-const WHEEL_RADIUS = 0.38;
-const PAINT = "#e63946";
 
 /** Parking within this distance of a spot (and slowly) opens its panel. */
 const PARK_RADIUS = 4.2;
@@ -89,7 +84,7 @@ class Route {
   }
 
   /**
-   * The point `s` metres along the route, shifted into the left-hand lane.
+   * The point `s` metres along the route, shifted to the left of the path.
    * Past the end it carries on along the last segment, so the steering target
    * never collapses onto the end point (which would make the car circle it).
    */
@@ -136,10 +131,10 @@ function useKeys() {
   return keys;
 }
 
-/** Push the car out of buildings, trees and the edge of the world. */
+/** Push the car out of houses, temples and the edge of town. */
 function collide() {
   let hit = false;
-  for (const { center, size } of boxes) {
+  for (const { center, size } of solids) {
     const hx = size[0] / 2;
     const hz = size[1] / 2;
     const cx = clamp(car.x, center[0] - hx, center[0] + hx);
@@ -160,20 +155,12 @@ function collide() {
       else car.z = center[1] + Math.sign(car.z - center[1] || 1) * (hz + CAR_RADIUS);
     }
   }
-  for (const { center, r } of circles) {
-    const dx = car.x - center[0];
-    const dz = car.z - center[1];
-    const d = Math.hypot(dx, dz);
-    const min = r + CAR_RADIUS;
-    if (d >= min || d < 1e-4) continue;
+  const x = clamp(car.x, BOUNDS.minX, BOUNDS.maxX);
+  const z = clamp(car.z, BOUNDS.minZ, BOUNDS.maxZ);
+  if (x !== car.x || z !== car.z) {
     hit = true;
-    car.x = center[0] + (dx / d) * min;
-    car.z = center[1] + (dz / d) * min;
-  }
-  if (Math.abs(car.x) > WORLD_HALF || Math.abs(car.z) > WORLD_HALF) {
-    hit = true;
-    car.x = clamp(car.x, -WORLD_HALF, WORLD_HALF);
-    car.z = clamp(car.z, -WORLD_HALF, WORLD_HALF);
+    car.x = x;
+    car.z = z;
   }
   return hit;
 }
@@ -193,10 +180,11 @@ function nearestDestination() {
 
 /**
  * The visitor's car. Arrow keys / WASD drive it; Space brakes. Destinations
- * (from the HUD, signs, buildings or clicking the road) are driven to by an
- * autopilot that follows the roads in the left-hand lane.
+ * (from the HUD, signs, buildings or clicking the paving) are driven to by an
+ * autopilot that follows the paths around the temples, keeping left.
  */
 export default function Car() {
+  const vehicle = vehicleById[useCity((s) => s.vehicle)];
   const root = useRef<THREE.Group>(null!);
   const body = useRef<THREE.Group>(null!);
   const wheels = useRef<(THREE.Group | null)[]>([]);
@@ -206,8 +194,7 @@ export default function Car() {
   const route = useRef<Route | null>(null);
   const scratch = useRef({
     target: new THREE.Vector2(),
-    spin: 0,
-    y: groundHeight(car.x, car.z),
+    travelled: 0,
     stuck: 0,
     reversing: false,
     reverseSide: 1,
@@ -222,18 +209,12 @@ export default function Car() {
     const request = takeDriveRequest();
     if (request === "stop") {
       route.current = null;
-      cityStore.set({ driving: null, route: null });
+      cityStore.set({ driving: null });
     } else if (request) {
-      const points = planRoute([car.x, car.z], request.target);
-      route.current = new Route(points, request.destination);
+      route.current = new Route(planRoute([car.x, car.z], request.target), request.destination);
       s.stuck = 0;
       s.reversing = false;
-      cityStore.set({
-        driving: request.destination ?? "point",
-        route: points,
-        active: null,
-        dismissed: null,
-      });
+      cityStore.set({ driving: request.destination ?? "point", active: null, dismissed: null });
     }
 
     // 2. Keyboard input. Any input takes the wheel back from the autopilot.
@@ -244,9 +225,9 @@ export default function Car() {
 
     if (manual && route.current) {
       route.current = null;
-      cityStore.set({ driving: null, route: null });
+      cityStore.set({ driving: null });
     }
-    if (manual && !cityStore.get().hasDriven) cityStore.set({ hasDriven: true });
+    if (manual && !cityStore.get().started) cityStore.set({ started: true });
 
     let targetSteer = 0;
     const r = route.current;
@@ -269,8 +250,8 @@ export default function Car() {
         if (Math.abs(alpha) < 0.9) s.reversing = false;
       } else if (Math.abs(alpha) > 2 && Math.abs(car.speed) < 4) {
         s.reversing = true;
-        // Turn the nose towards the target. Dead behind, swing the tail into
-        // the opposite lane (to our right, as we keep left).
+        // Turn the nose towards the target. Dead behind, swing the tail to
+        // our right (we keep left, so that's where the room is).
         s.reverseSide = Math.abs(alpha) > 2.8 ? 1 : Math.sign(alpha);
       }
 
@@ -295,7 +276,7 @@ export default function Car() {
         route.current = null;
         car.speed = 0;
         const arrived = s.stuck <= 2.5 ? r.destination : null;
-        cityStore.set({ driving: null, route: null, active: arrived, dismissed: null });
+        cityStore.set({ driving: null, active: arrived, dismissed: null });
       }
     } else {
       // 3b. Manual driving.
@@ -328,12 +309,11 @@ export default function Car() {
     if (collide()) car.speed *= 1 - Math.min(1, 5 * dt);
 
     // 5. Visuals: position, wheel spin, steering and a little body roll.
-    s.y = THREE.MathUtils.damp(s.y, groundHeight(car.x, car.z), 12, dt);
-    root.current.position.set(car.x, s.y, car.z);
+    root.current.position.set(car.x, 0, car.z);
     root.current.rotation.y = car.heading;
-    s.spin += (car.speed * dt) / WHEEL_RADIUS;
+    s.travelled += car.speed * dt;
     wheels.current.forEach((wheel) => {
-      if (wheel) wheel.rotation.x = s.spin;
+      if (wheel) wheel.rotation.x = s.travelled / (wheel.userData.radius as number);
     });
     pivots.current.forEach((pivot) => {
       if (pivot) pivot.rotation.y = car.steer;
@@ -341,62 +321,44 @@ export default function Car() {
     body.current.rotation.z = THREE.MathUtils.damp(body.current.rotation.z, -car.steer * car.speed * 0.01, 6, dt);
   });
 
-  // Each wheel: steering pivot (front only) > spinner (turns about the axle) > tyre, hub and a spoke.
-  const wheel = (x: number, z: number, i: number, front: boolean) => {
-    const side = x > 0 ? 1 : -1;
-    return (
-      <group key={i} position={[x, WHEEL_RADIUS, z]}>
-        <group
-          ref={(el) => {
-            if (front) pivots.current[i] = el;
-          }}
-        >
-          <group
-            ref={(el) => {
-              wheels.current[i] = el;
-            }}
-          >
-            <mesh rotation-z={Math.PI / 2} material={mat("#22252b", 0.9)} castShadow>
-              <cylinderGeometry args={[WHEEL_RADIUS, WHEEL_RADIUS, 0.3, 18]} />
-            </mesh>
-            <mesh position-x={side * 0.155} rotation-z={Math.PI / 2} material={mat("#d7dce2", 0.5)}>
-              <cylinderGeometry args={[0.2, 0.2, 0.02, 14]} />
-            </mesh>
-            <mesh position-x={side * 0.17} material={mat("#8d96a3", 0.5)}>
-              <boxGeometry args={[0.02, 0.34, 0.07]} />
-            </mesh>
-          </group>
-        </group>
-      </group>
-    );
-  };
+  const Body = vehicle.Body;
 
   return (
-    <group ref={root} position={[car.x, groundHeight(car.x, car.z), car.z]} rotation-y={car.heading}>
+    <group ref={root} position={[car.x, 0, car.z]} rotation-y={car.heading}>
       <group ref={body}>
-        <RoundedBox args={[1.8, 0.6, 3.6]} radius={0.2} smoothness={3} position-y={0.66} castShadow material={mat(PAINT, 0.5)} />
-        <mesh position-y={0.4} material={mat(PALETTE.dark)}>
-          <boxGeometry args={[1.82, 0.16, 3.3]} />
-        </mesh>
-        <RoundedBox args={[1.5, 0.55, 1.85]} radius={0.16} smoothness={3} position={[0, 1.18, -0.25]} castShadow material={mat("#3a4a5c", 0.35)} />
-        <RoundedBox args={[1.54, 0.1, 1.7]} radius={0.05} smoothness={2} position={[0, 1.46, -0.25]} castShadow material={mat(PALETTE.white, 0.5)} />
-        {/* Lights */}
-        {[-0.55, 0.55].map((x) => (
-          <group key={x}>
-            <mesh position={[x, 0.72, 1.79]} material={mat("#fff6d5", 0.3)}>
-              <boxGeometry args={[0.38, 0.16, 0.05]} />
-            </mesh>
-            <mesh position={[x, 0.72, -1.79]} material={mat("#b3202c", 0.4)}>
-              <boxGeometry args={[0.38, 0.14, 0.05]} />
-            </mesh>
-          </group>
-        ))}
+        <Body />
       </group>
 
-      {wheel(0.86, 1.15, 0, true)}
-      {wheel(-0.86, 1.15, 1, true)}
-      {wheel(0.86, -1.15, 2, false)}
-      {wheel(-0.86, -1.15, 3, false)}
+      {/* Each wheel: steering pivot (front only) > spinner (turns about the axle) > tyre, hub, spoke */}
+      {vehicle.wheels.map((w, i) => {
+        const side = w.x >= 0 ? 1 : -1;
+        return (
+          <group key={`${vehicle.id}-${i}`} position={[w.x, w.radius, w.z]}>
+            <group
+              ref={(el) => {
+                pivots.current[i] = w.front ? el : null;
+              }}
+            >
+              <group
+                ref={(el) => {
+                  wheels.current[i] = el;
+                }}
+                userData={{ radius: w.radius }}
+              >
+                <mesh rotation-z={Math.PI / 2} material={mat("#22252b", 0.9)} castShadow>
+                  <cylinderGeometry args={[w.radius, w.radius, 0.28, 18]} />
+                </mesh>
+                <mesh position-x={side * 0.145} rotation-z={Math.PI / 2} material={mat("#d7dce2", 0.5)}>
+                  <cylinderGeometry args={[w.radius * 0.52, w.radius * 0.52, 0.02, 14]} />
+                </mesh>
+                <mesh position-x={side * 0.16} material={mat("#8d96a3", 0.5)}>
+                  <boxGeometry args={[0.02, w.radius * 0.9, 0.07]} />
+                </mesh>
+              </group>
+            </group>
+          </group>
+        );
+      })}
     </group>
   );
 }

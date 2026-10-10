@@ -25,7 +25,7 @@ export default function HeroActions() {
         className="inline-flex items-center gap-2 rounded-full border bg-background px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
       >
         <CarFront className="size-4" aria-hidden />
-        Drive the town
+        Drive through Bhaktapur
       </button>
     </div>
   );

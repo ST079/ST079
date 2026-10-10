@@ -1,51 +1,69 @@
 "use client";
 
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+
 import { SignTracker } from "../signs";
+import { car } from "../store";
+import Monuments from "./buildings/Monuments";
 import CameraRig from "./CameraRig";
 import Car from "./Car";
 import Destinations from "./Destinations";
-import Ground from "./Ground";
-import RouteLine from "./RouteLine";
-import Scenery from "./Scenery";
-import Trees from "./Trees";
+import Environment from "./Environment";
+import Houses from "./Houses";
 import { PALETTE } from "./parts";
 
+// The sun sits south-west and high; its shadow box follows the car.
+const SUN_OFFSET = new THREE.Vector3(-30, 55, 35);
+
+function Sun({ shadowSize }: { shadowSize: number }) {
+  const light = useRef<THREE.DirectionalLight>(null!);
+
+  useFrame(() => {
+    light.current.position.set(car.x + SUN_OFFSET.x, SUN_OFFSET.y, car.z + SUN_OFFSET.z);
+    light.current.target.position.set(car.x, 0, car.z);
+    light.current.target.updateMatrixWorld();
+  });
+
+  return (
+    <directionalLight
+      ref={light}
+      castShadow
+      intensity={2.5}
+      color="#ffe6c7"
+      shadow-mapSize={[shadowSize, shadowSize]}
+      shadow-camera-left={-48}
+      shadow-camera-right={48}
+      shadow-camera-top={48}
+      shadow-camera-bottom={-48}
+      shadow-camera-near={10}
+      shadow-camera-far={160}
+      shadow-bias={-0.0004}
+      shadow-normalBias={0.05}
+    />
+  );
+}
+
 interface SceneProps {
-  /** False while the intro overlay is still up; the camera waits above the town. */
+  /** False while the intro overlay is still up; the camera holds an aerial view. */
   ready: boolean;
   /** Shadow map resolution: lower on phones. */
   shadowSize: number;
 }
 
-/** A bright, daytime miniature town. */
+/** Bhaktapur Durbar Square and Taumadhi, on a clear afternoon. */
 export default function Scene({ ready, shadowSize }: SceneProps) {
   return (
     <>
-      <color attach="background" args={[PALETTE.sky]} />
-      <fog attach="fog" args={[PALETTE.sky, 95, 190]} />
+      <fog attach="fog" args={[PALETTE.haze, 70, 260]} />
+      <hemisphereLight args={["#e6eef6", "#a3b974", 1.45]} />
+      <Sun shadowSize={shadowSize} />
 
-      <hemisphereLight args={["#ffffff", "#c9dcb5", 1.6]} />
-      <directionalLight
-        castShadow
-        position={[30, 60, 22]}
-        intensity={2.4}
-        color="#fff3e2"
-        shadow-mapSize={[shadowSize, shadowSize]}
-        shadow-camera-left={-58}
-        shadow-camera-right={58}
-        shadow-camera-top={58}
-        shadow-camera-bottom={-58}
-        shadow-camera-near={10}
-        shadow-camera-far={170}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.04}
-      />
-
-      <Ground />
-      <Trees />
-      <Scenery />
+      <Environment />
+      <Houses />
+      <Monuments />
       <Destinations />
-      <RouteLine />
       <Car />
       <CameraRig ready={ready} />
       {/* After the camera rig, so signs follow this frame's camera */}

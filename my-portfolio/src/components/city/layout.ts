@@ -1,9 +1,13 @@
-// The town's map: roads, destinations, scenery, collision shapes and the road
-// graph the car's autopilot drives along. Plain data and maths, no React.
+// The town's map: a small take on Bhaktapur Durbar Square and Taumadhi Square.
+// Plain data and maths, no React: destinations, landmarks, the row houses that
+// enclose the squares, collision shapes, and the path graph the car's
+// autopilot follows.
 //
-// Coordinates are [x, z] on the ground. The camera looks north, so -z is "up"
-// on screen. The roads form a 3x3 grid; each destination building sits beside
-// a road and has a parking spot on it.
+// Coordinates are [x, z] on the ground; -z is north (towards the palace and
+// the Himalayas). Brick-paved open areas:
+//   Durbar Square   x -36..36, z -16..16
+//   Taumadhi Square x  20..62, z  28..64
+//   a lane south to the Newa home, and a lane south-east to Taumadhi.
 
 export type Vec2 = [number, number];
 
@@ -13,106 +17,71 @@ export interface Destination {
   id: DestinationId;
   /** Portfolio section, e.g. "Projects". */
   section: string;
-  /** The building, e.g. "Data Center". */
+  /** The landmark, e.g. "Nyatapola Temple". */
   place: string;
   color: string;
-  /** Where the car parks: a point on a road's centre line. */
+  /** Where the car parks: a node of the path graph. */
   spot: Vec2;
-  /** Building footprint (centre and [width, depth]) used for collisions. */
+  /** The landmark's centre, used for its sign and for framing it on arrival. */
   center: Vec2;
-  size: Vec2;
-  /** Which way the building's entrance faces. */
-  facing: "south" | "east";
   /** Height of the floating sign. */
   signHeight: number;
 }
-
-export const ROADS = [-30, 0, 30];
-export const ROAD_WIDTH = 7;
-const ROAD_HALF = ROAD_WIDTH / 2;
-export const ROAD_SPAN = 60 + ROAD_WIDTH; // roads run from -33.5 to 33.5
-/** Distance from a road's centre line to the middle of a lane (Nepal drives on the left). */
-export const LANE_OFFSET = 1.75;
-/** The car can't leave this square. */
-export const WORLD_HALF = 44;
-
-/** Each block is a raised sidewalk slab with a lawn on top. */
-export const BLOCKS: Vec2[] = [
-  [-15, -15],
-  [15, -15],
-  [-15, 15],
-  [15, 15],
-];
-export const BLOCK_SIZE = 30 - ROAD_WIDTH; // 23, edge to edge between roads
-export const LOT_SIZE = BLOCK_SIZE - 3; // 20, lawn inside the sidewalk
-export const SIDEWALK_HEIGHT = 0.12;
 
 export const destinations: Destination[] = [
   {
     id: "about",
     section: "About",
-    place: "Home",
+    place: "Newa Home",
     color: "#e07a5f",
-    spot: [-20, 0],
-    center: [-20, -10],
-    size: [9, 8],
-    facing: "south",
-    signHeight: 8.2,
+    spot: [-14, 34],
+    center: [-24, 34],
+    signHeight: 14.5,
   },
   {
     id: "experience",
     section: "Experience",
-    place: "Veel HQ",
+    place: "55-Window Palace",
     color: "#3d5a80",
-    spot: [10, 0],
-    center: [10, -11],
-    size: [8, 9],
-    facing: "south",
-    signHeight: 18.8,
+    spot: [-12, -13.5],
+    center: [-12, -23],
+    signHeight: 19,
   },
   {
     id: "projects",
     section: "Projects",
-    place: "Data Center",
+    place: "Nyatapola Temple",
     color: "#2a9d8f",
-    spot: [0, -20],
-    center: [-10.5, -20],
-    size: [8, 9],
-    facing: "east",
-    signHeight: 7.6,
+    spot: [24, 46],
+    center: [41, 46],
+    signHeight: 28,
   },
   {
     id: "skills",
     section: "Skills",
-    place: "Tech Hub",
+    place: "Vatsala Durga Temple",
     color: "#e9a23b",
-    spot: [0, 10],
-    center: [-10.5, 10],
-    size: [8, 8],
-    facing: "east",
-    signHeight: 9,
+    spot: [-1, -5],
+    center: [7, -5],
+    signHeight: 18.5,
   },
   {
     id: "education",
     section: "Education",
-    place: "University",
+    place: "Golden Gate",
     color: "#7c6fd6",
-    spot: [-15, 30],
-    center: [-15, 20.5],
-    size: [16, 9],
-    facing: "south",
-    signHeight: 10.6,
+    spot: [14, -13.5],
+    center: [14, -19.5],
+    signHeight: 12.5,
   },
   {
     id: "contact",
     section: "Contact",
-    place: "Post Office",
+    place: "Taleju Bell",
     color: "#d64545",
-    spot: [10, 30],
-    center: [10, 21],
-    size: [9, 7],
-    facing: "south",
-    signHeight: 7.4,
+    spot: [24, -5],
+    center: [18.5, -5],
+    signHeight: 9.5,
   },
 ];
 
@@ -128,33 +97,53 @@ export function nextStop(id: DestinationId): Destination {
   return destinationById[TOUR[(TOUR.indexOf(id) + 1) % TOUR.length]];
 }
 
-/** The car starts parked at Home, in the eastbound lane. */
-export const START = { x: -20, z: -LANE_OFFSET, heading: Math.PI / 2 };
+/** The car starts in Durbar Square, facing the palace. */
+export const START = { x: 3, z: 9, heading: Math.PI };
+
+/** Keep to the left of the path while driving (as in Nepal). */
+export const LANE_OFFSET = 1.2;
+
+/** The car can't leave this box. */
+export const BOUNDS = { minX: -44, maxX: 70, minZ: -36, maxZ: 72 };
+
+/** Brick-paved open ground, as [minX, maxX, minZ, maxZ]. */
+export const PAVED: [number, number, number, number][] = [
+  [-36, 36, -16, 16], // Durbar Square
+  [20, 62, 28, 64], // Taumadhi Square
+  [-18, -10, 16, 48], // lane to the Newa home
+  [20, 28, 16, 28], // lane to Taumadhi
+  [28, 37, 24, 28], // corner between the lane and Taumadhi
+];
 
 // ---------------------------------------------------------------------------
-// Scenery
+// Landmarks (footprints and heights)
 // ---------------------------------------------------------------------------
 
-export interface Decor {
+export interface Solid {
   center: Vec2;
   size: Vec2;
   height: number;
-  color: string;
-  roof: "flat" | "gable";
 }
 
-/** Ordinary buildings that fill the other lots. */
-export const decor: Decor[] = [
-  { center: [-20, -20.5], size: [8, 7], height: 7.5, color: "#f2cc8f", roof: "flat" },
-  { center: [20, -20], size: [8, 8], height: 11, color: "#81b29a", roof: "flat" },
-  { center: [9.5, -21], size: [7, 6], height: 5.5, color: "#f4f1de", roof: "flat" },
-  { center: [20, -10], size: [7, 6], height: 4.2, color: "#e07a5f", roof: "flat" },
-  { center: [-20, 10], size: [7, 6], height: 3.2, color: "#f6f1e7", roof: "gable" },
-  { center: [20, 21], size: [8, 7], height: 9, color: "#9cb4cc", roof: "flat" },
-];
+export const LANDMARKS = {
+  palace: { center: [-12, -23], size: [30, 12], height: 14 },
+  goldenGate: { center: [14, -19.5], size: [14, 5], height: 10 },
+  gateWall: { center: [5, -20.5], size: [4, 7], height: 7 },
+  gallery: { center: [29, -22.5], size: [12, 11], height: 12 },
+  vatsala: { center: [7, -5], size: [8, 8], height: 16 },
+  bell: { center: [18.5, -5], size: [3.6, 3.6], height: 7 },
+  pashupati: { center: [-9, 4.5], size: [7, 7], height: 12 },
+  chyasilin: { center: [-24, 4], size: [8, 8], height: 9 },
+  fasidega: { center: [31.5, 2], size: [8, 8], height: 14 },
+  column: { center: [-22, -9], size: [1.6, 1.6], height: 9 },
+  nyatapola: { center: [41, 46], size: [13, 13], height: 26 },
+  bhairabnath: { center: [54, 36], size: [10, 7], height: 13 },
+  home: { center: [-24, 34], size: [9, 9], height: 13 },
+} satisfies Record<string, Solid>;
 
-/** A fountain on the corner lot by the central crossroads. */
-export const FOUNTAIN: Vec2 = [-10, -10];
+// ---------------------------------------------------------------------------
+// Row houses enclosing the squares and lanes
+// ---------------------------------------------------------------------------
 
 /** Deterministic pseudo-random numbers, so the town looks the same every visit. */
 function seeded(seed: number) {
@@ -164,117 +153,171 @@ function seeded(seed: number) {
   };
 }
 
+export interface House {
+  center: Vec2;
+  /** World-space footprint [x, z]. */
+  size: Vec2;
+  height: number;
+  /** Unit vector the street front faces. */
+  facing: Vec2;
+  /** Width of the street front. */
+  front: number;
+  wall: string;
+  roof: string;
+}
+
+interface Row {
+  /** "x": the row runs along z at x = at. "z": it runs along x at z = at. */
+  axis: "x" | "z";
+  at: number;
+  from: number;
+  to: number;
+  /** Which side of the line the houses stand on. */
+  outward: 1 | -1;
+  skip?: [number, number][];
+}
+
+const ROWS: Row[] = [
+  // Durbar Square
+  { axis: "x", at: -36, from: -16, to: 16, outward: -1 },
+  { axis: "x", at: 36, from: -16, to: 16, outward: 1 },
+  { axis: "z", at: 16, from: -36, to: 36, outward: 1, skip: [[-18, -10], [20, 28]] },
+  { axis: "z", at: -16, from: -36, to: -27, outward: -1 },
+  // Lane to the Newa home
+  { axis: "x", at: -18, from: 25, to: 48, outward: -1, skip: [[28.5, 39.5]] },
+  { axis: "x", at: -10, from: 25, to: 48, outward: 1 },
+  { axis: "z", at: 48, from: -18, to: -10, outward: 1 },
+  // Lane to Taumadhi, and Taumadhi Square
+  { axis: "x", at: 20, from: 25, to: 64, outward: -1 },
+  { axis: "z", at: 28, from: 37, to: 62, outward: -1 },
+  { axis: "x", at: 62, from: 28, to: 64, outward: 1 },
+  { axis: "z", at: 64, from: 20, to: 62, outward: 1 },
+];
+
+const BRICK_WALLS = ["#9c4630", "#a34d35", "#8f3f2b", "#ab553b", "#96432f"];
+const PLASTER_WALLS = ["#e9dcc4", "#e2cfb0", "#efe3cf"];
+const ROOF_TILES = ["#5e3426", "#6b3a2a", "#57301f"];
+
+function buildHouses() {
+  const rand = seeded(1979);
+  const houses: House[] = [];
+  for (const row of ROWS) {
+    let t = row.from;
+    while (t < row.to - 2.5) {
+      const width = Math.min(5 + rand() * 3, row.to - t);
+      const skip = row.skip?.find(([a, b]) => t + width > a && t < b);
+      if (skip) {
+        t = skip[1];
+        continue;
+      }
+      const depth = 7 + rand() * 2.5;
+      const height = 7 + Math.floor(rand() * 3) * 2.6 + rand() * 0.8;
+      const across = row.at + (row.outward * depth) / 2;
+      const along = t + width / 2;
+      const plaster = rand() < 0.18;
+      houses.push({
+        center: row.axis === "x" ? [across, along] : [along, across],
+        size: row.axis === "x" ? [depth, width] : [width, depth],
+        height,
+        facing: row.axis === "x" ? [-row.outward, 0] : [0, -row.outward],
+        front: width,
+        wall: plaster
+          ? PLASTER_WALLS[Math.floor(rand() * PLASTER_WALLS.length)]
+          : BRICK_WALLS[Math.floor(rand() * BRICK_WALLS.length)],
+        roof: ROOF_TILES[Math.floor(rand() * ROOF_TILES.length)],
+      });
+      t += width;
+    }
+  }
+  return houses;
+}
+
+export const houses = buildHouses();
+
+/** Staircases that reach out beyond their temple's footprint. */
+const STAIRS: Solid[] = [
+  { center: [32.9, 46], size: [3.2, 3], height: 6 }, // Nyatapola (faces west)
+  { center: [2.2, -5], size: [1.6, 2.2], height: 3 }, // Vatsala Durga (faces west)
+  { center: [31.5, 6.7], size: [1.8, 1.4], height: 4 }, // Fasidega (faces south)
+];
+
+/** Everything the car (and the camera) can bump into. */
+export const solids: Solid[] = [
+  ...Object.values(LANDMARKS),
+  ...STAIRS,
+  ...houses.map((h) => ({ center: h.center, size: h.size, height: h.height })),
+];
+
+// ---------------------------------------------------------------------------
+// Scenery outside the town
+// ---------------------------------------------------------------------------
+
 export interface Tree {
   position: Vec2;
   scale: number;
-  kind: 0 | 1; // round or cone
+  kind: 0 | 1;
 }
 
-function scatter(
-  rand: () => number,
-  count: number,
-  area: [number, number, number, number], // minX, maxX, minZ, maxZ
-  keepOut: (x: number, z: number) => boolean,
-) {
+function buildTrees() {
+  const rand = seeded(79);
   const trees: Tree[] = [];
-  let attempts = 0;
-  while (trees.length < count && attempts < count * 40) {
-    attempts++;
-    const x = area[0] + rand() * (area[1] - area[0]);
-    const z = area[2] + rand() * (area[3] - area[2]);
-    if (keepOut(x, z)) continue;
-    if (trees.some((t) => Math.hypot(t.position[0] - x, t.position[1] - z) < 2.6)) continue;
-    trees.push({ position: [x, z], scale: 0.8 + rand() * 0.55, kind: rand() < 0.65 ? 0 : 1 });
+  while (trees.length < 140) {
+    const x = -130 + rand() * 280;
+    const z = -110 + rand() * 260;
+    if (x > -52 && x < 80 && z > -44 && z < 82) continue; // the town itself
+    trees.push({ position: [x, z], scale: 1 + rand() * 0.9, kind: rand() < 0.6 ? 0 : 1 });
   }
   return trees;
 }
 
-const insideBox = (x: number, z: number, center: Vec2, size: Vec2, margin: number) =>
-  Math.abs(x - center[0]) < size[0] / 2 + margin && Math.abs(z - center[1]) < size[1] / 2 + margin;
+export const trees = buildTrees();
 
-const onRoad = (x: number, z: number) =>
-  Math.abs(x) <= ROAD_SPAN / 2 + 1 &&
-  Math.abs(z) <= ROAD_SPAN / 2 + 1 &&
-  ROADS.some((r) => Math.abs(x - r) < ROAD_HALF + 1.2 || Math.abs(z - r) < ROAD_HALF + 1.2);
+// ---------------------------------------------------------------------------
+// Path graph and route planning
+// ---------------------------------------------------------------------------
 
-const blocked = (x: number, z: number) =>
-  onRoad(x, z) ||
-  destinations.some((d) => insideBox(x, z, d.center, d.size, 1.6)) ||
-  decor.some((d) => insideBox(x, z, d.center, d.size, 1.6)) ||
-  Math.hypot(x - FOUNTAIN[0], z - FOUNTAIN[1]) < 4.5;
+const node = {
+  n1: [-32, -13.5],
+  n2: destinationById.experience.spot,
+  n3: [-1, -13.5],
+  n4: destinationById.education.spot,
+  n5: [24, -13.5],
+  s1: [-32, 12],
+  s2: [-14, 12],
+  s3: [-1, 12],
+  s4: [24, 12],
+  m1: destinationById.skills.spot,
+  e1: destinationById.contact.spot,
+  b1: destinationById.projects.spot,
+  b2: [24, 58],
+  a1: destinationById.about.spot,
+  a2: [-14, 44],
+} satisfies Record<string, Vec2>;
 
-const rand = seeded(79);
+type NodeName = keyof typeof node;
 
-export const trees: Tree[] = [
-  // A ring of woods around the town
-  ...scatter(rand, 26, [-47, 47, -47, -36], blocked),
-  ...scatter(rand, 26, [-47, 47, 36, 47], blocked),
-  ...scatter(rand, 16, [-47, -36, -36, 36], blocked),
-  ...scatter(rand, 16, [36, 47, -36, 36], blocked),
-  // The park
-  ...scatter(rand, 9, [6, 24, 6, 14], blocked),
-  // Gardens in the remaining lots
-  ...scatter(rand, 4, [-24, -16, 5, 14], blocked),
-  ...scatter(rand, 3, [-24, -6, -25, -15], blocked),
-  ...scatter(rand, 3, [14, 25, 14, 25], blocked),
+// Straight runs that keep clear of every temple and house.
+const LINKS: [NodeName, NodeName][] = [
+  ["n1", "n2"], ["n2", "n3"], ["n3", "n4"], ["n4", "n5"], // along the palace front
+  ["s1", "s2"], ["s2", "s3"], ["s3", "s4"], // along the south side of the square
+  ["n1", "s1"], // west side
+  ["n3", "m1"], ["m1", "s3"], // through the middle, past Vatsala
+  ["n5", "e1"], ["e1", "s4"], // east side, past the bell
+  ["s4", "b1"], ["b1", "b2"], // lane to Taumadhi and Nyatapola
+  ["s2", "a1"], ["a1", "a2"], // lane to the Newa home
 ];
 
-// ---------------------------------------------------------------------------
-// Collisions
-// ---------------------------------------------------------------------------
+const names = Object.keys(node) as NodeName[];
+const nodes: Vec2[] = names.map((n) => node[n] as Vec2);
+const edges: [number, number][] = LINKS.map(([a, b]) => [names.indexOf(a), names.indexOf(b)]);
 
-export const boxes: { center: Vec2; size: Vec2 }[] = [
-  ...destinations.map((d) => ({ center: d.center, size: d.size })),
-  ...decor.map((d) => ({ center: d.center, size: d.size })),
-];
-
-export const circles: { center: Vec2; r: number }[] = [
-  ...trees.map((t) => ({ center: t.position, r: 0.45 * t.scale })),
-  { center: FOUNTAIN, r: 3 },
-];
-
-/** Ground height under a point: sidewalk slabs are slightly raised. */
-export function groundHeight(x: number, z: number) {
-  const half = BLOCK_SIZE / 2;
-  return BLOCKS.some(([bx, bz]) => Math.abs(x - bx) < half && Math.abs(z - bz) < half)
-    ? SIDEWALK_HEIGHT
-    : 0;
-}
-
-// ---------------------------------------------------------------------------
-// Road graph and route planning
-// ---------------------------------------------------------------------------
-
-const nodes: Vec2[] = [];
-const edges: [number, number][] = [];
-
-function nodeIndex(p: Vec2) {
-  const i = nodes.findIndex((n) => n[0] === p[0] && n[1] === p[1]);
-  if (i >= 0) return i;
-  nodes.push(p);
-  return nodes.length - 1;
-}
-
-// Every road is split into edges at its crossroads and at any parking spots on it.
-for (const r of ROADS) {
-  const along = (axis: 0 | 1) => {
-    const points: Vec2[] = ROADS.map((t) => (axis === 0 ? [t, r] : [r, t]) as Vec2);
-    for (const d of destinations) {
-      if (d.spot[1 - axis] === r) points.push(d.spot);
-    }
-    points.sort((a, b) => a[axis] - b[axis]);
-    for (let i = 0; i < points.length - 1; i++) {
-      edges.push([nodeIndex(points[i]), nodeIndex(points[i + 1])]);
-    }
-  };
-  along(0); // east-west road at z = r
-  along(1); // north-south road at x = r
-}
+/** Path lines, for the minimap. */
+export const pathSegments: [Vec2, Vec2][] = edges.map(([a, b]) => [nodes[a], nodes[b]]);
 
 const dist = (a: Vec2, b: Vec2) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
-/** Closest point on the road network to `p`, and the edge it lies on. */
-function nearestOnRoad(p: Vec2) {
+/** Closest point on the path graph to `p`, and the edge it lies on. */
+function nearestOnPaths(p: Vec2) {
   let best = { point: nodes[0], edge: edges[0], d: Infinity };
   for (const edge of edges) {
     const [a, b] = [nodes[edge[0]], nodes[edge[1]]];
@@ -289,13 +332,12 @@ function nearestOnRoad(p: Vec2) {
 }
 
 /**
- * Shortest path along the roads from `from` to the road point nearest `to`
- * (Dijkstra over the road graph plus two temporary nodes). Returns a polyline
- * along road centre lines; the car drives it in the left-hand lane.
+ * Shortest way along the paths from `from` to the path point nearest `to`
+ * (Dijkstra over the graph plus two temporary nodes).
  */
 export function planRoute(from: Vec2, to: Vec2): Vec2[] {
-  const start = nearestOnRoad(from);
-  const end = nearestOnRoad(to);
+  const start = nearestOnPaths(from);
+  const end = nearestOnPaths(to);
 
   const points = [...nodes, start.point, end.point];
   const S = nodes.length;
@@ -334,7 +376,5 @@ export function planRoute(from: Vec2, to: Vec2): Vec2[] {
 
   const path: Vec2[] = [];
   for (let at = T; at >= 0; at = previous[at]) path.unshift(points[at]);
-
-  // Start from the car itself, then drop points that are on top of each other.
   return [from, ...path].filter((p, i, all) => i === 0 || dist(p, all[i - 1]) > 0.05);
 }

@@ -5,47 +5,44 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
 import * as THREE from "three";
 
-import { destinations, SIDEWALK_HEIGHT, type Destination, type DestinationId } from "../layout";
+import { destinations, LANDMARKS, type Destination, type DestinationId, type Solid } from "../layout";
 import { cityStore, driveTo } from "../store";
-import DataCenter from "./buildings/DataCenter";
-import Home from "./buildings/Home";
-import PostOffice from "./buildings/PostOffice";
-import TechHub from "./buildings/TechHub";
-import University from "./buildings/University";
-import VeelHQ from "./buildings/VeelHQ";
+import GoldenGate from "./buildings/GoldenGate";
+import NewaHome from "./buildings/NewaHome";
+import Nyatapola from "./buildings/Nyatapola";
+import Palace from "./buildings/Palace";
+import TalejuBell from "./buildings/TalejuBell";
+import Vatsala from "./buildings/Vatsala";
 
-const BUILDINGS: Record<DestinationId, ComponentType> = {
-  about: Home,
-  experience: VeelHQ,
-  projects: DataCenter,
-  skills: TechHub,
-  education: University,
-  contact: PostOffice,
+// Each destination's landmark, where it stands, and which way its front faces
+// (buildings are modelled facing +z; rotations turn them towards their spot).
+const BUILDINGS: Record<DestinationId, { Model: ComponentType; solid: Solid; rotation: number }> = {
+  about: { Model: NewaHome, solid: LANDMARKS.home, rotation: Math.PI / 2 }, // faces east
+  experience: { Model: Palace, solid: LANDMARKS.palace, rotation: 0 }, // faces south
+  projects: { Model: Nyatapola, solid: LANDMARKS.nyatapola, rotation: -Math.PI / 2 }, // faces west
+  skills: { Model: Vatsala, solid: LANDMARKS.vatsala, rotation: -Math.PI / 2 }, // faces west
+  education: { Model: GoldenGate, solid: LANDMARKS.goldenGate, rotation: 0 }, // faces south
+  contact: { Model: TalejuBell, solid: LANDMARKS.bell, rotation: Math.PI / 2 }, // faces east
 };
 
-const LOT_Y = SIDEWALK_HEIGHT + 0.04;
-
-/** The painted parking spot on the road; it fills in while the car is parked there. */
+/** A soft painted circle where the car parks; it brightens while parked there. */
 function Spot({ d }: { d: Destination }) {
   const fill = useRef<THREE.MeshBasicMaterial>(null!);
-  const ring = useRef<THREE.Mesh>(null!);
 
-  useFrame((state, dt) => {
+  useFrame((_, dt) => {
     const parked = cityStore.get().active === d.id;
-    fill.current.opacity = THREE.MathUtils.damp(fill.current.opacity, parked ? 0.45 : 0.18, 5, dt);
-    const pulse = parked ? 1 : 1 + Math.sin(state.clock.elapsedTime * 2.5) * 0.04;
-    ring.current.scale.setScalar(pulse);
+    fill.current.opacity = THREE.MathUtils.damp(fill.current.opacity, parked ? 0.4 : 0.16, 5, dt);
   });
 
   return (
-    <group position={[d.spot[0], 0.05, d.spot[1]]} rotation-x={-Math.PI / 2}>
+    <group position={[d.spot[0], 0.03, d.spot[1]]} rotation-x={-Math.PI / 2}>
       <mesh>
-        <circleGeometry args={[2.3, 40]} />
-        <meshBasicMaterial ref={fill} color={d.color} transparent opacity={0.18} depthWrite={false} />
+        <circleGeometry args={[2.4, 40]} />
+        <meshBasicMaterial ref={fill} color={d.color} transparent opacity={0.16} depthWrite={false} />
       </mesh>
-      <mesh ref={ring}>
-        <ringGeometry args={[2.1, 2.35, 48]} />
-        <meshBasicMaterial color={d.color} transparent opacity={0.9} depthWrite={false} />
+      <mesh>
+        <ringGeometry args={[2.25, 2.45, 48]} />
+        <meshBasicMaterial color={d.color} transparent opacity={0.7} depthWrite={false} />
       </mesh>
     </group>
   );
@@ -54,7 +51,7 @@ function Spot({ d }: { d: Destination }) {
 function Place({ d }: { d: Destination }) {
   const [hovered, setHovered] = useState(false);
   useCursor(hovered);
-  const Building = BUILDINGS[d.id];
+  const { Model, solid, rotation } = BUILDINGS[d.id];
 
   const go = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -64,8 +61,8 @@ function Place({ d }: { d: Destination }) {
   return (
     <>
       <group
-        position={[d.center[0], LOT_Y, d.center[1]]}
-        rotation-y={d.facing === "east" ? Math.PI / 2 : 0}
+        position={[solid.center[0], 0, solid.center[1]]}
+        rotation-y={rotation}
         onClick={go}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -73,15 +70,14 @@ function Place({ d }: { d: Destination }) {
         }}
         onPointerOut={() => setHovered(false)}
       >
-        <Building />
+        <Model />
       </group>
-
       <Spot d={d} />
     </>
   );
 }
 
-/** The six portfolio buildings and their parking spots (signs: see ../signs.tsx). */
+/** The six portfolio landmarks and their parking spots (signs: see ../signs.tsx). */
 export default function Destinations() {
   return (
     <>

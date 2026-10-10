@@ -2,26 +2,31 @@
 
 import { useEffect, useRef } from "react";
 
-import { BLOCK_SIZE, BLOCKS, destinations, ROAD_SPAN, ROAD_WIDTH, ROADS } from "../layout";
+import { destinations, houses, LANDMARKS, PAVED } from "../layout";
 import { car, driveTo, driveToPoint, useCity } from "../store";
 
-const HALF = 47; // world units shown either side of the centre
+// World area shown on the map.
+const MIN_X = -48;
+const MAX_X = 74;
+const MIN_Z = -40;
+const MAX_Z = 76;
 
-/** A small top-down map. Click a dot to drive there, or anywhere to route to that road. */
-export default function Minimap({ size }: { size: number }) {
+/** A small top-down map. Click a dot to drive there, or anywhere to route to that point. */
+export default function Minimap({ width }: { width: number }) {
   const marker = useRef<SVGGElement>(null);
-  const route = useCity((s) => s.route);
   const active = useCity((s) => s.active);
 
-  const scale = size / (HALF * 2);
-  const at = (v: number) => (v + HALF) * scale;
+  const scale = width / (MAX_X - MIN_X);
+  const height = (MAX_Z - MIN_Z) * scale;
+  const px = (x: number) => (x - MIN_X) * scale;
+  const pz = (z: number) => (z - MIN_Z) * scale;
 
   // Move the car marker every frame without re-rendering.
   useEffect(() => {
     let frame = 0;
     const tick = () => {
-      const x = (car.x + HALF) * scale;
-      const y = (car.z + HALF) * scale;
+      const x = (car.x - MIN_X) * scale;
+      const y = (car.z - MIN_Z) * scale;
       const degrees = 180 - (car.heading * 180) / Math.PI;
       marker.current?.setAttribute("transform", `translate(${x} ${y}) rotate(${degrees})`);
       frame = requestAnimationFrame(tick);
@@ -32,51 +37,45 @@ export default function Minimap({ size }: { size: number }) {
 
   const onMapClick = (e: React.MouseEvent<SVGSVGElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
-    driveToPoint(((e.clientX - box.left) / box.width) * HALF * 2 - HALF, ((e.clientY - box.top) / box.height) * HALF * 2 - HALF);
+    driveToPoint(
+      MIN_X + ((e.clientX - box.left) / box.width) * (MAX_X - MIN_X),
+      MIN_Z + ((e.clientY - box.top) / box.height) * (MAX_Z - MIN_Z),
+    );
   };
+
+  const rect = (center: [number, number], size: [number, number]) => ({
+    x: px(center[0] - size[0] / 2),
+    y: pz(center[1] - size[1] / 2),
+    width: size[0] * scale,
+    height: size[1] * scale,
+  });
 
   return (
     <div className="pointer-events-auto rounded-2xl bg-white/90 p-2 shadow-md ring-1 ring-black/5 backdrop-blur">
       <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
         className="cursor-crosshair rounded-xl"
         onClick={onMapClick}
         role="img"
-        aria-label="Town map"
+        aria-label="Map of Durbar Square and Taumadhi"
       >
-        <rect width={size} height={size} fill="#dcebcf" />
-        {BLOCKS.map(([x, z]) => (
-          <rect
-            key={`${x},${z}`}
-            x={at(x - BLOCK_SIZE / 2)}
-            y={at(z - BLOCK_SIZE / 2)}
-            width={BLOCK_SIZE * scale}
-            height={BLOCK_SIZE * scale}
-            fill="#c5dcb2"
-          />
+        <rect width={width} height={height} fill="#cfdcb4" />
+        {PAVED.map(([x0, x1, z0, z1], i) => (
+          <rect key={i} x={px(x0)} y={pz(z0)} width={(x1 - x0) * scale} height={(z1 - z0) * scale} fill="#d9a58a" />
         ))}
-        {ROADS.map((r) => (
-          <g key={r} fill="#b9c0ca">
-            <rect x={at(-ROAD_SPAN / 2)} y={at(r - ROAD_WIDTH / 2)} width={ROAD_SPAN * scale} height={ROAD_WIDTH * scale} />
-            <rect x={at(r - ROAD_WIDTH / 2)} y={at(-ROAD_SPAN / 2)} width={ROAD_WIDTH * scale} height={ROAD_SPAN * scale} />
-          </g>
+        {houses.map((h, i) => (
+          <rect key={i} {...rect(h.center, h.size)} fill="#9c5a44" />
         ))}
-        {route && (
-          <polyline
-            points={route.map(([x, z]) => `${at(x)},${at(z)}`).join(" ")}
-            fill="none"
-            stroke="#2563eb"
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-          />
-        )}
+        {Object.values(LANDMARKS).map((l, i) => (
+          <rect key={i} {...rect(l.center, l.size)} fill="#6b3a2a" />
+        ))}
         {destinations.map((d) => (
           <circle
             key={d.id}
-            cx={at(d.spot[0])}
-            cy={at(d.spot[1])}
+            cx={px(d.spot[0])}
+            cy={pz(d.spot[1])}
             r={active === d.id ? 6 : 4.5}
             fill={d.color}
             stroke="#fff"
@@ -91,7 +90,7 @@ export default function Minimap({ size }: { size: number }) {
           </circle>
         ))}
         <g ref={marker}>
-          <path d="M0 -6 L4.5 5 L0 2.6 L-4.5 5 Z" fill="#e63946" stroke="#fff" strokeWidth={1.2} strokeLinejoin="round" />
+          <path d="M0 -6 L4.5 5 L0 2.6 L-4.5 5 Z" fill="#1f2937" stroke="#fff" strokeWidth={1.2} strokeLinejoin="round" />
         </g>
       </svg>
     </div>

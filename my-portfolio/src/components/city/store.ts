@@ -6,7 +6,10 @@ import { destinationById, START, type DestinationId, type Vec2 } from "./layout"
 //
 // Values that change every frame (the car's position and speed) live in plain
 // mutable objects so they never cause React renders. Discrete state (where the
-// car is parked, where it's driving) goes through a tiny subscribable store.
+// car is parked, where it's driving, which car you picked) goes through a tiny
+// subscribable store.
+
+export type VehicleId = "hatchback" | "taxi" | "jeep" | "tempo";
 
 export interface CityState {
   /** Destination the car is parked at; its panel is open unless dismissed. */
@@ -15,18 +18,17 @@ export interface CityState {
   dismissed: DestinationId | null;
   /** Where the autopilot is heading, if anywhere. */
   driving: DestinationId | "point" | null;
-  /** The planned route, drawn on the road while driving. */
-  route: Vec2[] | null;
-  /** True after the first keyboard input; hides the controls hint. */
-  hasDriven: boolean;
+  /** True once the visitor has driven or picked a destination; hides the welcome. */
+  started: boolean;
+  vehicle: VehicleId;
 }
 
 const initialState: CityState = {
   active: null,
   dismissed: null,
   driving: null,
-  route: null,
-  hasDriven: false,
+  started: false,
+  vehicle: "hatchback",
 };
 
 let state = initialState;
@@ -77,18 +79,43 @@ export function zoomBy(factor: number) {
   view.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, view.zoom * factor));
 }
 
+// The chosen car is remembered in this browser only.
+const VEHICLE_KEY = "st079-vehicle";
+
+export function chooseVehicle(vehicle: VehicleId) {
+  cityStore.set({ vehicle });
+  try {
+    localStorage.setItem(VEHICLE_KEY, vehicle);
+  } catch {
+    // Storage can be unavailable (private mode); the choice just isn't remembered.
+  }
+}
+
+export function restoreVehicle() {
+  try {
+    const saved = localStorage.getItem(VEHICLE_KEY);
+    if (saved === "hatchback" || saved === "taxi" || saved === "jeep" || saved === "tempo") {
+      cityStore.set({ vehicle: saved });
+    }
+  } catch {
+    // Ignore: fall back to the default car.
+  }
+}
+
 // Driving requests are picked up by <Car> on its next frame.
 export type DriveRequest = { target: Vec2; destination: DestinationId | null } | "stop";
 let pending: DriveRequest | null = null;
 
-/** Drive along the roads to a destination's parking spot. */
+/** Drive along the paths to a destination's parking spot. */
 export function driveTo(id: DestinationId) {
   pending = { target: destinationById[id].spot, destination: id };
+  cityStore.set({ started: true });
 }
 
-/** Drive along the roads to the point nearest to (x, z). */
+/** Drive along the paths to the point nearest to (x, z). */
 export function driveToPoint(x: number, z: number) {
   pending = { target: [x, z], destination: null };
+  cityStore.set({ started: true });
 }
 
 export function stopDriving() {
