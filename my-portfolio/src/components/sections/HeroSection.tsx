@@ -1,8 +1,10 @@
 import Highlight from "@/components/Highlight";
 import LanyardClient from "@/components/lanyard/LanyardClient";
 import LogoLoop from "@/components/ui/logo-loop";
+import profile from "@/config/profile";
 import siteConfig from "@/config/site";
 import { techStack } from "@/config/tech-stack";
+import HeroActions from "./HeroActions";
 
 // Panel 1: intro text on the left, the 3D lanyard hanging from the top on the right.
 export default function HeroSection() {
@@ -20,21 +22,23 @@ export default function HeroSection() {
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             Junior{" "}
             <Highlight action="underline" color="#FF9800">
-              Backend Developer
+              Backend Engineer
             </Highlight>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
             I build{" "}
             <Highlight action="highlight" color="#87CEFA">
-              scalable backend systems
+              backend systems that power real-world products
             </Highlight>{" "}
-            with C#, .NET, PostgreSQL, and modern cloud-native technologies.
+            with C#/.NET, GraphQL, PostgreSQL, Kafka and Redis.
           </p>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            C# · .NET · PostgreSQL · Docker · OpenTelemetry
+            Currently at {profile.company} · {profile.location}
           </p>
+
+          <HeroActions />
         </div>
 
         <div className="mt-16 w-full">
