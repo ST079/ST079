@@ -325,11 +325,18 @@ const STAIRS: Solid[] = [
   { center: [LANDMARKS.fasidega.center[0], LANDMARKS.fasidega.center[1] + 4.7], size: [1.8, 1.4], height: 4 },
 ];
 
+/** Two soldiers standing guard either side of the Golden Gate's doorway. */
+export const GATE_GUARDS: Vec2[] = [-2.3, 2.3].map((dx): Vec2 => [
+  LANDMARKS.goldenGate.center[0] + dx,
+  LANDMARKS.goldenGate.center[1] + LANDMARKS.goldenGate.size[1] / 2 + 0.5,
+]);
+
 /** Everything the car (and the camera) can bump into. */
 export const solids: Solid[] = [
   ...Object.values(LANDMARKS),
   ...STAIRS,
   ...HILL_SOLIDS,
+  ...GATE_GUARDS.map((center) => ({ center, size: [0.9, 0.9] as Vec2, height: 1.9 })),
   ...houses.map((h) => ({ center: h.center, size: h.size, height: h.height })),
 ];
 
