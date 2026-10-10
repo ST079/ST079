@@ -27,8 +27,8 @@ const ACCEL = 13;
 const BRAKE = 28;
 const DRAG = 3.5;
 // Autopilot
-const AUTO_SPEED = 13;
-const AUTO_DECEL = 11;
+const AUTO_SPEED = 16;
+const AUTO_DECEL = 12;
 const CAR_RADIUS = 1.5;
 
 /** Parking within this distance of a spot (and slowly) opens its panel. */

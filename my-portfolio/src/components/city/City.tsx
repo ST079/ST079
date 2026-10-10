@@ -30,7 +30,7 @@ export default function City({ onExit }: { onExit: () => void }) {
           shadows
           flat
           dpr={desktop ? [1, 1.75] : [1, 1.5]}
-          camera={{ position: [46, 52, 74], fov: 52, near: 0.5, far: 1400 }}
+          camera={{ position: [58, 62, 92], fov: 52, near: 0.5, far: 1400 }}
         >
           <Scene ready={ready} shadowSize={desktop ? 2048 : 1024} />
         </Canvas>
