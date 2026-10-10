@@ -53,7 +53,7 @@ interface SceneProps {
   shadowSize: number;
 }
 
-/** Bhaktapur Durbar Square and Taumadhi, on a clear afternoon. */
+/** Bhaktapur Durbar Square, Taumadhi and Swayambhunath, on a clear afternoon. */
 export default function Scene({ ready, shadowSize }: SceneProps) {
   return (
     <>

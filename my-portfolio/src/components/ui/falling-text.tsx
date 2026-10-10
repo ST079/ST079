@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import Matter from "matter-js";
 
 import { cn } from "@/lib/utils";
@@ -12,11 +12,27 @@ import { cn } from "@/lib/utils";
 // - one fixed-step physics loop (the original stepped the engine twice a frame);
 // - the box no longer swallows the mouse wheel, and on touch screens it doesn't
 //   block page scrolling (dragging is mouse-only);
-// - the debug canvas is only created when `wireframes` is on.
+// - the debug canvas is only created when `wireframes` is on;
+// - it can drop any elements (`items`, e.g. logo tiles), not just words, with
+//   rounded bodies to match rounded tiles (`chamfer`).
+
+/** Something to drop instead of a word. */
+export interface FallingItem {
+  key: string;
+  node: ReactNode;
+  /** Tooltip (the item itself may have no text). */
+  label?: string;
+}
 
 export interface FallingTextProps {
   /** Words are split on regular spaces; use non-breaking spaces to keep phrases together. */
-  text: string;
+  text?: string;
+  /** Elements to drop instead of words. */
+  items?: FallingItem[];
+  /** Corner radius of the physics bodies, for rounded items (px). */
+  chamfer?: number;
+  /** Bounciness, 0 to 1. */
+  restitution?: number;
   /** Words (or word prefixes) to highlight. */
   highlightWords?: string[];
   highlightClassName?: string;
@@ -42,7 +58,10 @@ export interface FallingTextProps {
 type MouseHandlers = Record<"mousemove" | "mousedown" | "mouseup" | "mousewheel", EventListener>;
 
 export default function FallingText({
-  text,
+  text = "",
+  items,
+  chamfer = 0,
+  restitution = 0.8,
   highlightWords = [],
   highlightClassName = "font-bold text-cyan-500",
   wordClassName,
@@ -110,9 +129,10 @@ export default function FallingText({
       const r = el.getBoundingClientRect();
       const body = Bodies.rectangle(r.left - box.left + r.width / 2, r.top - box.top + r.height / 2, r.width, r.height, {
         render: { fillStyle: "transparent" },
-        restitution: 0.8,
+        restitution,
         frictionAir: 0.01,
         friction: 0.2,
+        ...(chamfer ? { chamfer: { radius: Math.min(chamfer, r.width / 2, r.height / 2) } } : {}),
       });
       Body.setVelocity(body, { x: (Math.random() - 0.5) * 5, y: 0 });
       Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.05);
@@ -183,7 +203,7 @@ export default function FallingText({
       Composite.clear(engine.world, false);
       Engine.clear(engine);
     };
-  }, [started, gravity, wireframes, backgroundColor, mouseConstraintStiffness]);
+  }, [started, gravity, wireframes, backgroundColor, mouseConstraintStiffness, restitution, chamfer]);
 
   const start = () => {
     if (!started && (trigger === "click" || trigger === "hover")) setTriggered(true);
@@ -202,20 +222,32 @@ export default function FallingText({
       style={{ backgroundColor }}
     >
       <div ref={textRef} className="inline-block" style={{ fontSize, lineHeight: 1.4 }}>
-        {words.map((word, i) => (
-          <span
-            key={`${word}-${i}`}
-            data-word
-            className={cn(
-              "inline-block select-none whitespace-nowrap",
-              wordClassName,
-              highlightWords.some((h) => word.startsWith(h)) && highlightClassName,
-            )}
-            style={{ marginInline: wordSpacing }}
-          >
-            {word}
-          </span>
-        ))}
+        {items
+          ? items.map((item) => (
+              <span
+                key={item.key}
+                data-word
+                title={item.label}
+                className={cn("inline-block select-none align-middle", wordClassName)}
+                style={{ marginInline: wordSpacing }}
+              >
+                {item.node}
+              </span>
+            ))
+          : words.map((word, i) => (
+              <span
+                key={`${word}-${i}`}
+                data-word
+                className={cn(
+                  "inline-block select-none whitespace-nowrap",
+                  wordClassName,
+                  highlightWords.some((h) => word.startsWith(h)) && highlightClassName,
+                )}
+                style={{ marginInline: wordSpacing }}
+              >
+                {word}
+              </span>
+            ))}
       </div>
       {wireframes && <div ref={canvasRef} className="pointer-events-none absolute left-0 top-0 z-0" />}
     </div>

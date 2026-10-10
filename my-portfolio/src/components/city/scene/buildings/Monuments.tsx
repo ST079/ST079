@@ -1,9 +1,13 @@
 "use client";
 
-import { LANDMARKS, type Solid } from "../../layout";
+import { HILL, LANDMARKS, type Solid } from "../../layout";
 import { Box, Frustum, mat, PALETTE } from "../parts";
+import GoldenGate from "./GoldenGate";
 import { Guardian, PagodaTiers, Pinnacle } from "./pagoda";
 import { GalleryWing, GateWall } from "./Palace";
+import { SwayambhuHill } from "./Swayambhu";
+import TalejuBell from "./TalejuBell";
+import Vatsala from "./Vatsala";
 
 /** Two-tiered pagoda on a low plinth. */
 function Pashupatinath() {
@@ -132,10 +136,24 @@ function Place({ solid, rotation = 0, children }: { solid: Solid; rotation?: num
   );
 }
 
-/** Temples and palace wings that aren't destinations. */
+/** Temples, palace wings and the like that aren't destinations. */
 export default function Monuments() {
   return (
     <>
+      {/* Durbar Square's landmarks (Swayambhunath carries Skills, Education and Contact) */}
+      <Place solid={LANDMARKS.vatsala} rotation={-Math.PI / 2}>
+        <Vatsala />
+      </Place>
+      <Place solid={LANDMARKS.goldenGate}>
+        <GoldenGate />
+      </Place>
+      <Place solid={LANDMARKS.bell} rotation={Math.PI / 2}>
+        <TalejuBell />
+      </Place>
+      {/* Swayambhunath's hill, hilltop shrines and prayer flags */}
+      <group position={[HILL.center[0], 0, HILL.center[1]]}>
+        <SwayambhuHill />
+      </group>
       <Place solid={LANDMARKS.pashupati}>
         <Pashupatinath />
       </Place>

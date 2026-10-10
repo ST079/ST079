@@ -42,7 +42,7 @@ const SECTION_LINES: Record<string, { text: string; reaction: Reaction }> = {
 const TIPS = [
   "Psst… you can drive through Bhaktapur. Top right!",
   "Every project card links to its code.",
-  "Hover the skills box, then throw the chips around.",
+  "Hover the skills box, then throw the logos around.",
   "Leave me alone for a bit and I'll take a nap.",
   "In the 3D town, press 1–6 to jump between places.",
 ];

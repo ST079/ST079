@@ -12,8 +12,8 @@ import { Signs } from "./signs";
 import { restoreVehicle } from "./store";
 
 /**
- * The portfolio as a drive through Bhaktapur Durbar Square. Each landmark is
- * a section; park at one (or pick it in the "Where to?" bar) to read it.
+ * The portfolio as a drive from Bhaktapur Durbar Square to Swayambhunath. Each
+ * landmark is a section; park at one (or pick it in the "Where to?" bar) to read it.
  * Loaded client-side only, see ViewModeShell.
  */
 export default function City({ onExit }: { onExit: () => void }) {

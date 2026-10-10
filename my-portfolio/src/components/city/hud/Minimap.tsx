@@ -2,14 +2,17 @@
 
 import { useEffect, useRef } from "react";
 
-import { destinations, houses, LANDMARKS, PAVED } from "../layout";
+import { destinations, HILL, houses, LANDMARKS, PAVED, ROAD, SWAYAMBHU_AREA, TOWN_AREA } from "../layout";
 import { car, driveTo, driveToPoint, useCity } from "../store";
 
-// World area shown on the map.
-const MIN_X = -58;
-const MAX_X = 92;
-const MIN_Z = -36;
-const MAX_Z = 92;
+// World area shown on the map: both places and the road between them.
+const MIN_X = SWAYAMBHU_AREA[0] + 4;
+const MAX_X = TOWN_AREA[1] - 2;
+const MIN_Z = SWAYAMBHU_AREA[2] + 4;
+const MAX_Z = TOWN_AREA[3] - 4;
+
+/** Swayambhunath's square and the road are stone, Bhaktapur's brick. */
+const isStone = (area: (typeof PAVED)[number]) => area === ROAD || area[1] <= SWAYAMBHU_AREA[1];
 
 /** A small top-down map. Click a dot to drive there, or anywhere to route to that point. */
 export default function Minimap({ width }: { width: number }) {
@@ -59,12 +62,23 @@ export default function Minimap({ width }: { width: number }) {
         className="cursor-crosshair rounded-xl"
         onClick={onMapClick}
         role="img"
-        aria-label="Map of Durbar Square and Taumadhi"
+        aria-label="Map of Bhaktapur Durbar Square and Swayambhunath"
       >
         <rect width={width} height={height} fill="#cfdcb4" />
-        {PAVED.map(([x0, x1, z0, z1], i) => (
-          <rect key={i} x={px(x0)} y={pz(z0)} width={(x1 - x0) * scale} height={(z1 - z0) * scale} fill="#d9a58a" />
-        ))}
+        {PAVED.map((area, i) => {
+          const [x0, x1, z0, z1] = area;
+          return (
+            <rect
+              key={i}
+              x={px(x0)}
+              y={pz(z0)}
+              width={(x1 - x0) * scale}
+              height={(z1 - z0) * scale}
+              fill={isStone(area) ? "#d8cdb6" : "#d9a58a"}
+            />
+          );
+        })}
+        <circle cx={px(HILL.center[0])} cy={pz(HILL.center[1])} r={HILL.radius * scale} fill="#8fae6c" />
         {houses.map((h, i) => (
           <rect key={i} {...rect(h.center, h.size)} fill="#9c5a44" />
         ))}

@@ -4,12 +4,12 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { isOpen, LANDMARKS, PAVED, seeded, solids, type Vec2 } from "../layout";
+import { HILL, isOpen, LANDMARKS, PAVED, seeded, solids, type Vec2 } from "../layout";
 import { car } from "../store";
 
-// Life in the square: tourists wandering between temples (and a few sitting on
-// Nyatapola's steps), street dogs, cats and a flock of pigeons. Everyone gets
-// out of the way of the car.
+// Life in the squares: tourists wandering between temples (and a few sitting
+// on Nyatapola's steps), street dogs, cats, Swayambhunath's monkeys and flocks
+// of pigeons. Everyone gets out of the way of the car.
 //
 // Each kind is a small "rig" of parts. Every part is one InstancedMesh shared
 // by all characters of that kind, posed per frame, so the whole crowd costs a
@@ -55,6 +55,12 @@ const DOG_FUR = [
   ["#e8e2d6", "#c9bfae"],
   ["#8b5a2b", "#5c3a1a"],
   ["#d9b98c", "#a67c52"],
+];
+// Rhesus macaques: Swayambhunath's monkeys use the cat's rig, in their colours.
+const MONKEY_FUR = [
+  ["#8b7355", "#5e4b38"],
+  ["#9a8366", "#6b5844"],
+  ["#7d6a58", "#55463a"],
 ];
 const CAT_FUR = [
   ["#e08a3c", "#b8682a"],
@@ -140,6 +146,30 @@ function createAgents() {
   add("cat", 0, [-7, 11]);
   add("cat", 1, [44, 66]);
   add("cat", 2, [-22, 50.5]);
+
+  // Swayambhunath: visitors walking round the hill, and its monkeys (region 4)
+  const [hx, hz] = HILL.center;
+  for (let i = 0; i < 7; i++) add("tourist", 4);
+  const monkeys: Vec2[] = [
+    [hx + 33, hz + 8],
+    [hx + 30, hz - 13],
+    [hx - 20, hz + 31],
+    [hx - 33, hz - 6],
+    [hx + 9, hz - 31],
+    [hx + 22, hz + 31],
+  ];
+  for (const at of monkeys) add("cat", 4, at, { colors: [...pick(MONKEY_FUR)], scale: 1.35 + rand() * 0.2 });
+  // ...a few sat on the stairway, watching the road (steps rise 0.5 every 0.53)
+  for (const [step, z] of [[4, -0.9], [9, 1], [15, -0.6]]) {
+    add("cat", 4, [hx + 26 - (step + 0.5) * 0.533, hz + z], {
+      fixed: true,
+      mode: "sit",
+      y: (step + 1) * 0.5075,
+      yaw: Math.PI / 2,
+      colors: [...pick(MONKEY_FUR)],
+      scale: 1.4,
+    });
+  }
 
   return agents;
 }
@@ -592,6 +622,7 @@ interface Pigeon {
 const FLOCKS: { center: Vec2; count: number }[] = [
   { center: [-18, -3], count: 22 },
   { center: [40, 47], count: 14 },
+  { center: [HILL.center[0] + 26, HILL.center[1] + 16], count: 14 }, // by Swayambhu's stairs
 ];
 
 const BIRDS: Pigeon[] = (() => {
