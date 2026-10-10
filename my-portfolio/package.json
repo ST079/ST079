@@ -2,6 +2,7 @@
   "name": "my-portfolio",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,6 +11,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@bible-strong/avatar-core": "0.1.0",
+    "@bible-strong/avatar-react": "0.1.0",
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",

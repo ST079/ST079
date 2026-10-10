@@ -1,27 +1,44 @@
 # ST079 — Sujan Tamang's Portfolio
 
-Personal portfolio site for **Sujan Tamang**, a junior backend developer working with C#, .NET and PostgreSQL.
+Personal portfolio site for **Sujan Tamang**, a junior backend engineer working with C#, .NET, GraphQL, PostgreSQL and Kafka.
 
-On large screens, scrolling down moves the page sideways through full-screen panels. A physics-driven 3D badge hangs from the top of the hero, and a floating dock at the bottom handles navigation.
+The site has two views. It opens in a small 3D town modelled on Bhaktapur Durbar Square, where visitors drive a car to landmarks that each hold a part of the portfolio. One click switches to the classic page, a scrolling site with the same content and a few interactive extras.
 
 ## Features
 
-- **Intro overlay**: an animated "ST079" loader that wipes away to reveal the site. The page renders underneath it, so content is server-rendered and the 3D scene loads while the intro plays.
-- **Horizontal scroll (lg+)**: GSAP ScrollTrigger pins the page and slides the panels sideways. Elements marked with `data-reveal` fade in as they enter. On smaller screens the panels stack normally.
-- **3D lanyard badge**: React Three Fiber and Rapier physics. Visitors can drag the card. Custom front and back images are composited onto the card texture. It loads lazily and only mounts on large screens.
-- **Navigation dock**: a magnifying dock with tooltips that highlights the section currently on screen. Its links scroll smoothly, including into the horizontal panels.
-- **Tech stack marquee**: an infinitely scrolling strip of logos.
+### The town (first view)
+
+- **Drive or take the autopilot**: WASD or the arrow keys drive and Space brakes. Clicking a place in the destination bar, or pressing 1 to 6, drives there automatically.
+- **Landmarks as sections**: About, Experience, Projects, Skills, Education and Contact each live at a landmark, such as the 55-Window Palace or Nyatapola. Arriving opens that section in a panel. Escape closes it and E reopens it.
+- **Garage**: pick a hatchback, taxi, jeep or tempo. The choice is remembered.
+- **Chase camera and minimap**: the camera follows behind the car and avoids clipping into buildings. The minimap shows where everything is.
+- **Life on the square**: tourists, cats, dogs and pigeons wander around.
+
+### The classic page
+
+- **Intro overlay**: an animated "ST079" loader that wipes away to reveal the site.
+- **Horizontal scroll (lg+)**: GSAP ScrollTrigger pins the hero and About panels and slides them sideways.
+- **3D lanyard badge**: React Three Fiber and Rapier physics. Visitors can drag the card. It loads lazily and only on large screens.
+- **"How I work" band**: a short statement whose words light up as you scroll through it (GSAP SplitText).
+- **Experience timeline**: a line that fills as you scroll past each role.
+- **Projects**: category filters with animated re-layout, and cards that tilt and light up under the cursor.
+- **Skills playground**: the skills drop as physics bodies (matter-js) that can be thrown around.
+- **Momo, the sidekick**: a small animated character that sits on the heading of the section you're reading and hops over to the next heading as you scroll. Once that heading scrolls off the top, Momo waits at the side of the screen, peeking at the page, until the next heading comes into view. It greets visitors, comments on each section the first time it lands there, follows the mouse with its eyes, naps when nobody's around, and gives tips when clicked. Visitors can hide it for the rest of their visit.
+- **Navigation dock**: a magnifying dock that highlights the section on screen.
+- **Tech stack marquee**: an infinitely scrolling strip of logos in the hero.
 - **Hand-drawn highlights**: rough-notation underlines and highlights that start once the intro has gone.
 
 ## Tech stack
 
-| Area      | Tools                                                           |
-| --------- | --------------------------------------------------------------- |
-| Framework | Next.js 16 (App Router, Turbopack), React 19, TypeScript        |
-| Styling   | Tailwind CSS v4, shadcn/ui (Base UI), `tw-animate-css`          |
-| Animation | GSAP + ScrollTrigger (`@gsap/react`), Motion, rough-notation    |
-| 3D        | three.js, React Three Fiber, drei, `@react-three/rapier`, meshline |
-| Icons     | lucide-react, react-icons                                       |
+| Area      | Tools                                                                |
+| --------- | -------------------------------------------------------------------- |
+| Framework | Next.js 16 (App Router, Turbopack), React 19, TypeScript             |
+| Styling   | Tailwind CSS v4, shadcn/ui (Base UI), `tw-animate-css`               |
+| Animation | GSAP (ScrollTrigger, SplitText) with `@gsap/react`, Motion, rough-notation |
+| 3D        | three.js, React Three Fiber, drei, `@react-three/rapier`, meshline   |
+| Physics   | matter-js (skills playground), Rapier (lanyard)                      |
+| Character | `@bible-strong/avatar-react` (Momo)                                  |
+| Icons     | lucide-react, react-icons                                            |
 
 ## Getting started
 
@@ -50,55 +67,79 @@ my-portfolio/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx        # Root layout: font, metadata, IntroGate
-│   │   ├── page.tsx          # Home page: dock + horizontal panels
+│   │   ├── page.tsx          # Home page: view switcher, dock, Momo, sections
 │   │   └── globals.css       # Tailwind + shadcn theme tokens
 │   ├── assets/
 │   │   └── lanyard/          # Front/back images printed on the badge
 │   ├── components/
-│   │   ├── Highlight.tsx     # Highlighter that waits for the intro to finish
+│   │   ├── city/             # The 3D town
+│   │   │   ├── City.tsx      # Canvas, scene and HUD
+│   │   │   ├── layout.ts     # The map: landmarks, roads, houses, route planner
+│   │   │   ├── store.ts      # Shared state: car, chosen vehicle, autopilot target
+│   │   │   ├── signs.tsx     # Floating landmark signs
+│   │   │   ├── hud/          # Welcome card, garage, destination bar, panels, minimap
+│   │   │   └── scene/        # Car, camera, houses, people and animals, buildings/
+│   │   ├── content/          # Section content, shared by the town's panels and the classic page
 │   │   ├── icons/            # Brand SVG icons (GitHub, LinkedIn)
 │   │   ├── intro/            # Intro overlay: IntroGate, IntroLoader, Loader
 │   │   ├── lanyard/          # 3D badge (Lanyard) + lazy, desktop-only wrapper
-│   │   ├── layout/           # HorizontalScroll, NavigationDock
-│   │   ├── sections/         # Page panels: HeroSection, AboutSection
-│   │   └── ui/               # Reusable primitives (dock, tooltip, highlighter, logo-loop)
+│   │   ├── layout/           # ViewModeShell (town/classic switch), HorizontalScroll, NavigationDock
+│   │   ├── sections/         # Classic page sections, the "How I work" band, skills playground, timeline
+│   │   ├── sidekick/         # Momo: character (momo.avatar.json), behaviour, and the Perch spots on headings
+│   │   ├── ui/               # Reusable primitives (dock, tooltip, falling-text, tilt-card, …)
+│   │   ├── Highlight.tsx     # Highlighter that waits for the intro to finish
+│   │   └── Reveal.tsx        # Fades content in as it scrolls into view
 │   ├── config/
+│   │   ├── profile.ts        # All the portfolio content: bio, experience, projects, skills, …
 │   │   ├── site.ts           # Site title, nav links, socials, intro and lanyard settings
 │   │   └── tech-stack.tsx    # Logos shown in the tech stack marquee
 │   ├── hooks/
-│   │   ├── use-active-section.ts  # Which section is on screen (for the dock)
+│   │   ├── use-active-section.ts  # Which section is on screen (for the dock and Momo)
 │   │   └── use-media-query.ts     # Live CSS media query match
 │   └── lib/
 │       └── utils.ts          # `cn()` class-name helper
 ├── components.json           # shadcn/ui config (aliases match the folders above)
+├── LICENSE                   # GNU AGPL v3
 ├── next.config.ts
 └── tsconfig.json
 ```
 
 ### Where things go
 
-- **`components/ui/`**: generic building blocks with no site content, mostly added through the shadcn CLI or registries (`@magicui`, `@react-bits`). File names are kebab-case.
-- **`components/sections/`**: one component per full-screen panel. Each one is a `<section id="...">`.
-- **`components/layout/`**: page chrome that wraps or floats over the sections.
 - **`config/`**: content and settings. Edit text, links and images here rather than inside components.
+- **`components/content/`**: what each section says. Both views render these, so a change shows up in the town's panels and on the classic page.
+- **`components/sections/`**: the classic page's layout around that content. Each one is a `<section id="...">`.
+- **`components/city/`**: everything specific to the 3D town.
+- **`components/layout/`**: page chrome that wraps or floats over the sections.
+- **`components/ui/`**: generic building blocks with no site content, mostly from the shadcn CLI or registries (`@magicui`, `@react-bits`). File names are kebab-case.
 
 ## Customising
 
-**Text and links.** Edit [`src/config/site.ts`](src/config/site.ts). It holds the page title and description, the author name, the social links and the intro duration.
+**Text, experience, projects and skills.** Edit [`src/config/profile.ts`](src/config/profile.ts). Each project has a `category` for the filters, an `icon` and a `color`.
+
+**Title, navigation and socials.** Edit [`src/config/site.ts`](src/config/site.ts). It also holds the intro duration and the badge images.
 
 **Tech stack logos.** Edit [`src/config/tech-stack.tsx`](src/config/tech-stack.tsx). Icons come from `react-icons/si`.
 
 **Badge images.** Replace `src/assets/lanyard/card-front.png` and `card-back.png`. The model and strap texture are in `public/lanyard/`.
 
+**Momo.** The look, expressions and animations are in [`src/components/sidekick/momo.avatar.json`](src/components/sidekick/momo.avatar.json). What Momo says per section, and its tips, are at the top of [`Sidekick.tsx`](src/components/sidekick/Sidekick.tsx). Momo can sit on any heading wrapped in `<Perch section="…">`. The `Section` component already does this, so new sections get a spot automatically.
+
 **Adding a new section**
 
-1. Create `src/components/sections/ProjectsSection.tsx`. The root should be a `<section id="projects">`. To make it a horizontal panel on large screens, give it `lg:h-screen lg:w-screen lg:shrink-0`.
-2. Add it inside `<HorizontalScroll>` in [`src/app/page.tsx`](src/app/page.tsx), or after it if it should scroll vertically.
-3. Add `{ id: "projects", label: "Projects", icon: FolderGit2 }` to `navigation.sections` in `site.ts`. The dock picks it up automatically.
-4. Optionally add `data-reveal` to elements inside it so they animate in.
+1. Write its content in `src/components/content/`, reading text from `profile.ts`.
+2. Wrap it in `<Section id="talks" eyebrow="Talks" title="…">` inside `ContentSections.tsx`, and add it to [`src/app/page.tsx`](src/app/page.tsx).
+3. Add `{ id: "talks", label: "Talks", icon: Mic }` to `navigation.sections` in `site.ts`. The dock picks it up automatically.
+4. Optionally give it a place in the town: add a destination in `city/layout.ts` and map its id to the content in `city/hud/Panel.tsx`.
 
 ## Notes
 
 - This project uses **Next.js 16**, whose APIs differ from older versions. Check `node_modules/next/dist/docs/` before relying on older patterns (see `AGENTS.md`).
-- The horizontal scroll, the lanyard and the dock's scroll-to-panel behaviour only run at `min-width: 1024px` (Tailwind's `lg`). Below that the site is a normal vertical page.
-- `prefers-reduced-motion` stops the logo marquee.
+- The horizontal scroll, the lanyard and the dock's scroll-to-panel behaviour only run at `min-width: 1024px` (Tailwind's `lg`). Below that the classic page scrolls normally.
+- With `prefers-reduced-motion`, the marquee stops, the "How I work" words show fully lit, the skills show as plain chips, the cards don't tilt, and Momo holds still.
+
+## License
+
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
+
+It uses the AGPL because Momo is drawn with [`@bible-strong/avatar-react`](https://www.npmjs.com/package/@bible-strong/avatar-react), which is AGPL-3.0-only. The AGPL asks that anyone who runs a modified copy as a public website offers its visitors the source code. The Contact section links to this repository for that reason.

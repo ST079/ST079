@@ -1,4 +1,5 @@
 import AboutContent from "@/components/content/AboutContent";
+import Perch from "@/components/sidekick/Perch";
 
 // Panel 2 of the horizontal scroller. Elements with `data-reveal` animate in as
 // the panel slides into view (see HorizontalScroll.tsx).
@@ -12,9 +13,11 @@ export default function AboutSection() {
         <p data-reveal className="mb-3 text-sm text-muted-foreground">
           About me
         </p>
-        <h2 data-reveal className="mb-8 text-4xl font-bold tracking-tight sm:text-5xl">
-          I build the systems behind the interface.
-        </h2>
+        <Perch section="about">
+          <h2 data-reveal className="mb-8 text-4xl font-bold tracking-tight sm:text-5xl">
+            I build the systems behind the interface.
+          </h2>
+        </Perch>
         <AboutContent />
       </div>
     </section>

@@ -56,6 +56,19 @@ export default function ContactContent() {
       </button>
 
       <p className="mt-8 text-sm font-medium">{profile.motto}</p>
+
+      {/* The AGPL-3.0 licence asks that visitors can get this site's source. */}
+      <p className="mt-6 text-xs text-muted-foreground">
+        This site is open source under the AGPL-3.0.{" "}
+        <a
+          href={profile.links.source}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-foreground underline underline-offset-4 hover:no-underline"
+        >
+          View the source code
+        </a>
+      </p>
     </div>
   );
 }

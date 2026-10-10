@@ -10,12 +10,15 @@ import {
   SkillsSection,
 } from "@/components/sections/ContentSections";
 import HeroSection from "@/components/sections/HeroSection";
+import HowIWork from "@/components/sections/HowIWork";
+import SidekickLoader from "@/components/sidekick/SidekickLoader";
 
 export default function Home() {
   return (
     // The 3D town is shown on top; this classic page sits underneath it.
     <ViewModeShell>
       <NavigationDock />
+      <SidekickLoader />
 
       <main>
         {/* On lg+ screens, scrolling down slides these two panels sideways. */}
@@ -23,6 +26,9 @@ export default function Home() {
           <HeroSection />
           <AboutSection />
         </HorizontalScroll>
+
+        {/* Words light up as you scroll through this band. */}
+        <HowIWork />
 
         <ExperienceSection />
         <ProjectsSection />
