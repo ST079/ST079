@@ -2,18 +2,19 @@
 
 Personal portfolio site for **Sujan Tamang**, a junior backend engineer working with C#, .NET, GraphQL, PostgreSQL and Kafka.
 
-The site has two views. It opens in a small 3D town, a drive from Bhaktapur Durbar Square to Swayambhunath, where visitors drive to landmarks that each hold a part of the portfolio. One click switches to the classic page, a scrolling site with the same content and a few interactive extras.
+The site has two views. It opens in a small 3D Nepal, a ride from Bhaktapur Durbar Square past Swayambhunath to Pokhara's Phewa Lake, where visitors ride to landmarks that each hold a part of the portfolio. One click switches to the classic page, a scrolling site with the same content and a few interactive extras.
 
 ## Features
 
 ### The town (first view)
 
 - **Drive or take the autopilot**: WASD or the arrow keys drive and Space brakes. Clicking a place in the destination bar, or pressing 1 to 6, drives there automatically.
-- **Two places, three sections each**: Bhaktapur Durbar Square carries About (a Newa home), Experience (the 55-Window Palace) and Projects (Nyatapola). A road west leads to Swayambhunath, a stupa on a wooded hill, which carries Skills (the stairway up to the giant vajra), Education (the stupa) and Contact (the prayer wheels). Arriving opens that section in a panel. Escape closes it and E reopens it.
-- **Garage**: pick a hatchback, taxi, jeep, Safa tempo, motorbike or bicycle. The two-wheelers turn tighter and lean into bends, and the cyclist pedals. The choice is remembered.
-- **Chase camera and minimap**: the camera follows behind the car and avoids clipping into buildings. The minimap shows where everything is.
-- **Life on the squares**: tourists, cats, dogs and pigeons wander around, and Swayambhunath has its monkeys.
-- **Sound**: synthesised with the Web Audio API, no audio files. An engine that climbs through the gears (different for each ride), tyres, a skid on hard braking, a thud on bumping into things, the horn (H), a temple bell or singing bowl on arriving, pigeons taking off, and birds and distant bells. It starts on the first click or key press. The speaker button or M mutes it, and the choice is remembered.
+- **Three places, six sections**: Bhaktapur Durbar Square carries About (a Newa home), Experience (the 55-Window Palace) and Projects (Nyatapola). A road west leads to Swayambhunath, a stupa on a wooded hill, which carries Skills (the stairway up to the giant vajra) and Education (the stupa). The road ends at Pokhara's Phewa Lake, where Contact is Tal Barahi temple on its island. Arriving opens that section in a panel. Escape closes it and E reopens it.
+- **Pokhara**: past rice terraces, prayer flags and a gateway, Lakeside's promenade runs along the water. A stone border edges the whole lake, and a two-lane cycle path goes all the way round it (ride it yourself, or click anywhere on it); cyclists ride it both ways and pull over to let you by. You can ride anywhere from the water's edge out to the painted houses facing the lake. Round the shore are benches with people watching the water, lamps, shade trees, three boat landings with ticket huts and moored boats, food stalls (momo, roasted corn, tea and fruit) with people queueing, and a fenced playground where kids swing, see-saw, play football and fly a kite. Boats are rowed round the lake, egrets fly over it, herons fish in the shallows, ducks paddle along the shore and fish jump. The World Peace Pagoda stands on the hill across the water, paragliders circle down from Sarangkot, and Machhapuchhre rises behind.
+- **Garage**: everyone starts on the bicycle; switch to a motorbike, hatchback, taxi, jeep or Safa tempo. The two-wheelers turn tighter and lean into bends, and the cyclist pedals. The choice is remembered.
+- **Chase camera and minimap**: the camera follows behind the car and avoids clipping into buildings. The minimap pans with you and shows where everything is.
+- **Life on the squares**: tourists, cats, dogs and pigeons wander around, Swayambhunath has its monkeys, and Lakeside has its cyclists and boats.
+- **Sound**: synthesised with the Web Audio API, no audio files. An engine that climbs through the gears (different for each ride), tyres, a skid on hard braking, a thud on bumping into things, the horn (H), a temple bell or singing bowl on arriving, pigeons taking off, birds and distant bells, and at the lake the water lapping and oars splashing. It starts on the first click or key press. The speaker button or M mutes it, and the choice is remembered.
 
 ### The classic page
 
@@ -78,7 +79,7 @@ my-portfolio/
 │   │   │   ├── store.ts      # Shared state: car, chosen vehicle, autopilot target
 │   │   │   ├── signs.tsx     # Floating landmark signs
 │   │   │   ├── hud/          # Welcome card, garage, destination bar, panels, minimap
-│   │   │   └── scene/        # Car, camera, houses, people and animals, buildings/
+│   │   │   └── scene/        # Car, camera, houses, people and animals, Pokhara, buildings/
 │   │   ├── content/          # Section content, shared by the town's panels and the classic page
 │   │   ├── icons/            # Brand SVG icons (GitHub, LinkedIn)
 │   │   ├── intro/            # Intro overlay: IntroGate, IntroLoader, Loader

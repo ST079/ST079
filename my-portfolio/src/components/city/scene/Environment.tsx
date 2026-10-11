@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { ROAD_AREA, SWAYAMBHU_AREA, TOWN_AREA, trees, type Rect } from "../layout";
+import { POKHARA_AREA, ROAD2_AREA, ROAD_AREA, SWAYAMBHU_AREA, TOWN_AREA, trees, type Rect } from "../layout";
 import { driveToPoint } from "../store";
 import { mat, PALETTE } from "./parts";
 
@@ -50,49 +50,53 @@ function useBrickTexture() {
   }, []);
 }
 
-/** Grey-gold stone flags, for Swayambhunath's square and the road there. */
-function useStoneTexture() {
-  return useMemo(() => {
-    const size = 512;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#8e8572"; // joints
-    ctx.fillRect(0, 0, size, size);
+let stoneTexture: THREE.CanvasTexture | null = null;
 
-    const colors = ["#c9bea6", "#bfb399", "#d2c8b2", "#b8ad94", "#c4b89f"];
-    let seed = 23;
-    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    // Rows of slabs of varying length. Each row's slabs add up to exactly one
-    // tile width and wrap round, so the texture repeats without a seam.
-    const h = 64;
-    for (let y = 0; y < size; y += h) {
-      const widths: number[] = [];
-      let total = 0;
-      while (total < size - 140) {
-        const w = 70 + Math.floor(rand() * 70);
-        widths.push(w);
-        total += w;
-      }
-      if (size - total < 40) widths[widths.length - 1] += size - total;
-      else widths.push(size - total);
+/**
+ * Grey-gold stone flags, for Swayambhunath's square, Lakeside, the roads and
+ * the cycle path round the lake. Drawn once and shared.
+ */
+export function getStoneTexture() {
+  if (stoneTexture) return stoneTexture;
+  const size = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#8e8572"; // joints
+  ctx.fillRect(0, 0, size, size);
 
-      let x = Math.floor(rand() * size); // stagger the rows
-      for (const w of widths) {
-        ctx.fillStyle = colors[Math.floor(rand() * colors.length)];
-        ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
-        if (x + w > size) ctx.fillRect(x + 2 - size, y + 2, w - 4, h - 4);
-        x = (x + w) % size;
-      }
+  const colors = ["#c9bea6", "#bfb399", "#d2c8b2", "#b8ad94", "#c4b89f"];
+  let seed = 23;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // Rows of slabs of varying length. Each row's slabs add up to exactly one
+  // tile width and wrap round, so the texture repeats without a seam.
+  const h = 64;
+  for (let y = 0; y < size; y += h) {
+    const widths: number[] = [];
+    let total = 0;
+    while (total < size - 140) {
+      const w = 70 + Math.floor(rand() * 70);
+      widths.push(w);
+      total += w;
     }
+    if (size - total < 40) widths[widths.length - 1] += size - total;
+    else widths.push(size - total);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 8;
-    return texture;
-  }, []);
+    let x = Math.floor(rand() * size); // stagger the rows
+    for (const w of widths) {
+      ctx.fillStyle = colors[Math.floor(rand() * colors.length)];
+      ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+      if (x + w > size) ctx.fillRect(x + 2 - size, y + 2, w - 4, h - 4);
+      x = (x + w) % size;
+    }
+  }
+
+  stoneTexture = new THREE.CanvasTexture(canvas);
+  stoneTexture.wrapS = stoneTexture.wrapT = THREE.RepeatWrapping;
+  stoneTexture.colorSpace = THREE.SRGBColorSpace;
+  stoneTexture.anisotropy = 8;
+  return stoneTexture;
 }
 
 /** A flat paved patch over the fields. Clicking it drives there. */
@@ -133,17 +137,21 @@ function SkyGradient() {
   return <primitive attach="background" object={texture} />;
 }
 
+/** Machhapuchhre, the "fishtail": twin summits that tower over Pokhara. */
+const FISHTAIL = { x: -336, z: -440 };
+
 /** The Himalaya on the northern horizon (not fogged, so they stay crisp). */
 function Mountains() {
   const peaks = useMemo(() => {
     let seed = 8848;
     const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const list: { x: number; z: number; height: number; radius: number; far: boolean }[] = [];
-    for (let x = -460; x <= 460; x += 46 + rand() * 30) {
+    for (let x = -720; x <= 460; x += 46 + rand() * 30) {
       list.push({ x, z: -360 - rand() * 40, height: 70 + rand() * 90, radius: 55 + rand() * 45, far: false });
       list.push({ x: x + 25, z: -430 - rand() * 40, height: 110 + rand() * 80, radius: 70 + rand() * 40, far: true });
     }
-    return list;
+    // Leave room for Machhapuchhre, which stands out in front above Pokhara.
+    return list.filter((p) => Math.abs(p.x - FISHTAIL.x) > 40);
   }, []);
 
   const rock = useMemo(() => new THREE.MeshBasicMaterial({ color: "#9fb2c7", fog: false }), []);
@@ -162,6 +170,21 @@ function Mountains() {
           </mesh>
         </group>
       ))}
+      <group position={[FISHTAIL.x, 0, FISHTAIL.z]}>
+        {[
+          [0, 0, 260, 64],
+          [28, 10, 232, 50],
+        ].map(([x, z, height, radius], i) => (
+          <group key={i} position={[x, 0, z]}>
+            <mesh position-y={height / 2} material={rock}>
+              <coneGeometry args={[radius, height, 5]} />
+            </mesh>
+            <mesh position-y={height * 0.78} material={snow}>
+              <coneGeometry args={[radius * 0.44, height * 0.44, 5]} />
+            </mesh>
+          </group>
+        ))}
+      </group>
     </group>
   );
 }
@@ -171,14 +194,17 @@ function Hills() {
   const hills = useMemo(
     () =>
       [
-        [-250, 120, 70, 26],
-        [-280, 10, 80, 34], // behind Swayambhunath
+        [-200, 150, 60, 24],
         [-170, 190, 90, 30],
         [-40, 230, 110, 22],
         [120, 220, 90, 28],
         [230, 120, 80, 24],
         [240, -60, 90, 30],
-        [-260, -140, 85, 26],
+        [-215, -170, 75, 26],
+        // Low ridges beyond Phewa Lake, behind the houses on its far shore
+        [-610, -60, 90, 22],
+        [-630, 40, 100, 26],
+        [-590, 130, 80, 20],
         [-120, -190, 70, 20],
         [150, -200, 75, 22],
       ] as [number, number, number, number][],
@@ -254,7 +280,7 @@ function Trees() {
 /** Ground, sky, mountains and outskirts. Clicking the paving drives the car there. */
 export default function Environment() {
   const brick = useBrickTexture();
-  const stone = useStoneTexture();
+  const stone = useMemo(() => getStoneTexture(), []);
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > 6) return; // ignore the end of a drag
@@ -268,8 +294,8 @@ export default function Environment() {
       <Hills />
 
       {/* Fields around the town */}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.02} material={mat(PALETTE.field)} receiveShadow>
-        <planeGeometry args={[900, 900]} />
+      <mesh rotation-x={-Math.PI / 2} position={[-150, -0.02, 0]} material={mat(PALETTE.field)} receiveShadow>
+        <planeGeometry args={[1500, 1100]} />
       </mesh>
 
       {/* Brick paving across the town */}
@@ -278,9 +304,11 @@ export default function Environment() {
         <meshStandardMaterial map={brick} roughness={0.95} />
       </mesh>
 
-      {/* Stone flags round Swayambhunath's hill and along the road there */}
+      {/* Stone flags round Swayambhunath's hill, along Lakeside and on the roads */}
       <Paving area={SWAYAMBHU_AREA} map={stone} tile={6} onClick={onClick} />
       <Paving area={ROAD_AREA} map={stone} tile={6} onClick={onClick} />
+      <Paving area={POKHARA_AREA} map={stone} tile={6} onClick={onClick} />
+      <Paving area={ROAD2_AREA} map={stone} tile={6} onClick={onClick} />
 
       <Trees />
     </>

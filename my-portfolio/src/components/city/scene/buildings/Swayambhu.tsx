@@ -4,8 +4,8 @@ import { useLayoutEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { HILL, seeded } from "../../layout";
-import { cityStore } from "../../store";
+import { HILL, LANDMARKS, seeded } from "../../layout";
+import { car } from "../../store";
 import { Box, Frustum, mat, PALETTE } from "../parts";
 import { Guardian, PagodaTiers, Pinnacle } from "./pagoda";
 
@@ -398,15 +398,16 @@ export function VajraStairway() {
 
 const WALL_WHEELS = 18;
 
-/** Contact: a row of prayer wheels at the north foot of the hill (front faces +z). */
+/** A row of prayer wheels at the north foot of the hill (front faces +z). */
 export function PrayerWheelWall() {
   const mesh = useRef<THREE.InstancedMesh>(null!);
   const o = useRef(new THREE.Object3D());
   const spin = useRef(0);
 
-  // They turn slowly, and faster while someone's parked here to spin them.
+  // They turn slowly, and faster as someone passes close by to spin them.
   useFrame((_, dt) => {
-    spin.current += dt * (cityStore.get().active === "contact" ? 3 : 0.6);
+    const [wx, wz] = LANDMARKS.prayerWheels.center;
+    spin.current += dt * (Math.hypot(car.x - wx, car.z - wz) < 10 ? 3 : 0.6);
     const obj = o.current;
     for (let i = 0; i < WALL_WHEELS; i++) {
       obj.position.set(-7.65 + i * 0.9, 1.35, 0.15);

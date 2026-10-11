@@ -6,7 +6,7 @@ import GoldenGate from "./GoldenGate";
 import GateGuards from "./Guards";
 import { Guardian, PagodaTiers, Pinnacle } from "./pagoda";
 import { GalleryWing, GateWall } from "./Palace";
-import { SwayambhuHill } from "./Swayambhu";
+import { PrayerWheelWall, SwayambhuHill } from "./Swayambhu";
 import TalejuBell from "./TalejuBell";
 import Vatsala from "./Vatsala";
 
@@ -141,7 +141,7 @@ function Place({ solid, rotation = 0, children }: { solid: Solid; rotation?: num
 export default function Monuments() {
   return (
     <>
-      {/* Durbar Square's landmarks (Swayambhunath carries Skills, Education and Contact) */}
+      {/* Durbar Square's landmarks (the sections' own landmarks are in ../Destinations) */}
       <Place solid={LANDMARKS.vatsala} rotation={-Math.PI / 2}>
         <Vatsala />
       </Place>
@@ -156,6 +156,9 @@ export default function Monuments() {
       <group position={[HILL.center[0], 0, HILL.center[1]]}>
         <SwayambhuHill />
       </group>
+      <Place solid={LANDMARKS.prayerWheels} rotation={Math.PI}>
+        <PrayerWheelWall />
+      </Place>
       <Place solid={LANDMARKS.pashupati}>
         <Pashupatinath />
       </Place>

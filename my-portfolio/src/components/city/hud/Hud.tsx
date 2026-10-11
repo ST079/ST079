@@ -17,6 +17,7 @@ import Panel from "./Panel";
 /** "Driving to Projects · 64 m" while the autopilot is on, with a stop button. */
 function DrivingStatus() {
   const driving = useCity((s) => s.driving);
+  const vehicle = useCity((s) => s.vehicle);
   const distance = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -43,7 +44,8 @@ function DrivingStatus() {
         >
           <Navigation className="size-4 text-blue-600" aria-hidden />
           <span>
-            Driving to <span className="font-semibold">{label}</span>
+            {vehicle === "bicycle" || vehicle === "motorbike" ? "Riding" : "Driving"} to{" "}
+            <span className="font-semibold">{label}</span>
           </span>
           <span ref={distance} className="tabular-nums text-muted-foreground" />
           <button
@@ -91,10 +93,11 @@ function Welcome() {
           >
             <X className="size-4" />
           </button>
-          <p className="pr-6 text-base font-semibold">Namaste, welcome to the valley.</p>
+          <p className="pr-6 text-base font-semibold">Namaste, welcome to Nepal.</p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            My portfolio is a drive from Bhaktapur Durbar Square to Swayambhunath. Each landmark holds a
-            part of it: pick one below and the car takes you there{touch ? "." : ", or drive yourself."}
+            My portfolio is a ride from Bhaktapur Durbar Square past Swayambhunath to Pokhara&apos;s
+            Phewa Lake. Each landmark holds a part of it: pick one below to head there
+            {touch ? "." : ", or steer yourself."}
           </p>
           {!touch && (
             <p className="mt-3 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
@@ -102,7 +105,7 @@ function Welcome() {
               <Key>A</Key>
               <Key>S</Key>
               <Key>D</Key>
-              <span className="mr-2">drive</span>
+              <span className="mr-2">ride</span>
               <Key>Space</Key>
               <span className="mr-2">brake</span>
               <Key>1</Key>–<Key>6</Key>

@@ -5,12 +5,15 @@ import type { VehicleId } from "./store";
 // an engine that follows the speed through the gears (or, on the bicycle, just
 // tyres and chain), road noise, a skid on hard braking, a thud on bumping into
 // things, the horn, a bell on arriving somewhere, pigeons taking off, and a
-// quiet background of birds, murmur and distant bells.
+// quiet background of birds, murmur and distant bells (and, at Phewa Lake,
+// water lapping at the shore, the splash of oars and the odd duck).
 //
 // Browsers only allow audio after the visitor has clicked or pressed a key, so
 // nothing plays until then. The on/off choice is remembered in this browser.
 
 type Kind = "car" | "tempo" | "motorbike" | "bicycle";
+/** Which of the three places the car is in, for the background sounds. */
+export type SoundPlace = "town" | "swayambhu" | "pokhara";
 const KIND: Record<VehicleId, Kind> = {
   hatchback: "car",
   taxi: "car",
@@ -100,6 +103,7 @@ class TownSound {
   private road: { gain: GainNode; filter: BiquadFilterNode } | null = null;
   private skid: GainNode | null = null;
   private chain: GainNode | null = null;
+  private waves: GainNode | null = null;
   private kind: Kind | null = null;
   private lastSpeed = 0;
   private lastActive: string | null = null;
@@ -176,6 +180,7 @@ class TownSound {
     this.road = null;
     this.skid = null;
     this.chain = null;
+    this.waves = null;
     this.kind = null;
   }
 
@@ -261,6 +266,28 @@ class TownSound {
     bed.gain.value = 0.035;
     this.loop(ctx, 0.97).connect(bedFilter).connect(bed).connect(master);
 
+    // Water lapping at Phewa Lake's embankment: muffled noise that swells and
+    // ebbs with two slow, out-of-step waves, faded in near the water.
+    const waveFilter = ctx.createBiquadFilter();
+    waveFilter.type = "lowpass";
+    waveFilter.frequency.value = 700;
+    const lap = ctx.createGain();
+    lap.gain.value = 0.55;
+    [
+      [0.17, 0.3],
+      [0.29, 0.15],
+    ].forEach(([rate, depth]) => {
+      const swell = ctx.createOscillator();
+      swell.frequency.value = rate;
+      const amount = ctx.createGain();
+      amount.gain.value = depth;
+      swell.connect(amount).connect(lap.gain);
+      swell.start();
+    });
+    this.waves = ctx.createGain();
+    this.waves.gain.value = 0;
+    this.loop(ctx, 0.8).connect(waveFilter).connect(lap).connect(this.waves).connect(master);
+
     this.nextBird = ctx.currentTime + 1.5;
     this.nextBell = ctx.currentTime + 6;
   }
@@ -290,12 +317,21 @@ class TownSound {
   }
 
   /**
-   * Called every frame with the car's speed and ride, and where it's parked
-   * (for the arrival bell).
+   * Called every frame with the car's speed and ride, where it's parked (for
+   * the arrival bell), which place it's in, and how near Phewa Lake's water it
+   * is (0 far away, 1 at the embankment).
    */
-  update(speed: number, vehicle: VehicleId, dt: number, active: string | null, area: AreaId | null, inSwayambhu: boolean) {
+  update(
+    speed: number,
+    vehicle: VehicleId,
+    dt: number,
+    active: string | null,
+    area: AreaId | null,
+    place: SoundPlace,
+    lake: number,
+  ) {
     const ctx = this.live;
-    if (!ctx || !this.engine || !this.road || !this.skid || !this.chain || dt <= 0) return;
+    if (!ctx || !this.engine || !this.road || !this.skid || !this.chain || !this.waves || dt <= 0) return;
     const now = ctx.currentTime;
     const kind = KIND[vehicle];
     this.setKind(kind);
@@ -336,15 +372,26 @@ class TownSound {
     if (active && active !== this.lastActive) this.arrive(area);
     this.lastActive = active;
 
-    // Birds now and then; bells in the distance (more often, and smaller, at Swayambhu).
+    this.waves.gain.setTargetAtTime(lake * 0.06, now, 0.4);
+
+    // Birds now and then; bells in the distance (more often, and smaller, at
+    // Swayambhu), and at the lake the oars of the boats out on the water.
     if (now > this.nextBird) {
       this.chirp();
       this.nextBird = now + 2.5 + Math.random() * 6;
     }
     if (now > this.nextBell) {
-      if (inSwayambhu) this.bell(1650 + Math.random() * 500, 0.03, 1.4);
-      else this.bell(420 + Math.random() * 120, 0.025, 2.6);
-      this.nextBell = now + (inSwayambhu ? 5 : 11) + Math.random() * 9;
+      if (place === "pokhara") {
+        if (lake > 0.2) {
+          if (lake > 0.6 && Math.random() < 0.3) this.quack();
+          else this.splash(lake);
+        }
+        this.nextBell = now + 2 + Math.random() * 4;
+      } else {
+        if (place === "swayambhu") this.bell(1650 + Math.random() * 500, 0.03, 1.4);
+        else this.bell(420 + Math.random() * 120, 0.025, 2.6);
+        this.nextBell = now + (place === "swayambhu" ? 5 : 11) + Math.random() * 9;
+      }
     }
   }
 
@@ -461,6 +508,57 @@ class TownSound {
       o.start(now);
       o.stop(now + decay + 0.1);
     });
+  }
+
+  /** An oar dipping into the water somewhere out on the lake. */
+  private splash(near: number) {
+    const ctx = this.live;
+    if (!ctx || !this.master || !this.noise) return;
+    const now = ctx.currentTime;
+    const source = ctx.createBufferSource();
+    source.buffer = this.noise;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 900 + Math.random() * 500;
+    band.Q.value = 1.2;
+    const g = ctx.createGain();
+    const peak = 0.02 + near * 0.025;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(peak, now + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = Math.random() * 1.4 - 0.7;
+    source.connect(band).connect(g).connect(pan).connect(this.master);
+    source.start(now, Math.random());
+    source.stop(now + 0.6);
+  }
+
+  /** A duck along the shore: a nasal, falling "quack", sometimes two. */
+  private quack() {
+    const ctx = this.live;
+    if (!ctx || !this.master) return;
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = Math.random() * 1.2 - 0.6;
+    pan.connect(this.master);
+    const count = Math.random() < 0.5 ? 2 : 1;
+    for (let k = 0; k < count; k++) {
+      const at = ctx.currentTime + k * 0.22;
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(330, at);
+      o.frequency.exponentialRampToValueAtTime(220, at + 0.14);
+      const band = ctx.createBiquadFilter();
+      band.type = "bandpass";
+      band.frequency.value = 1150;
+      band.Q.value = 3;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(0.05, at + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      o.connect(band).connect(g).connect(pan);
+      o.start(at);
+      o.stop(at + 0.2);
+    }
   }
 
   /** A singing bowl: two close tones beating slowly, a long ring. */
