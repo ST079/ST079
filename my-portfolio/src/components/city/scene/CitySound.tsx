@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 
-import { townSound } from "../audio";
-import { destinationById, SWAYAMBHU_AREA } from "../layout";
+import { townSound, type SoundPlace } from "../audio";
+import { destinationById, POKHARA_AREA, shoreDistance, SWAYAMBHU_AREA } from "../layout";
 import { car, cityStore } from "../store";
 
 /**
@@ -30,7 +30,11 @@ export default function CitySound() {
   useFrame((_, dt) => {
     const { vehicle, active } = cityStore.get();
     const area = active ? destinationById[active].area : null;
-    townSound.update(car.speed, vehicle, Math.min(dt, 1 / 20), active, area, car.x < SWAYAMBHU_AREA[1]);
+    const place: SoundPlace = car.x < POKHARA_AREA[1] ? "pokhara" : car.x < SWAYAMBHU_AREA[1] ? "swayambhu" : "town";
+    // The water is loudest at the shore (the promenade, the cycle path) and
+    // fades out across Lakeside.
+    const lake = place === "pokhara" ? Math.max(0, Math.min(1, 1.15 - shoreDistance(car.x, car.z) / 45)) : 0;
+    townSound.update(car.speed, vehicle, Math.min(dt, 1 / 20), active, area, place, lake);
   });
 
   return null;

@@ -15,6 +15,7 @@ import Environment from "./Environment";
 import Houses from "./Houses";
 import Npcs from "./Npcs";
 import { PALETTE } from "./parts";
+import Pokhara from "./Pokhara";
 
 // The sun sits south-west and high; its shadow box follows the car.
 const SUN_OFFSET = new THREE.Vector3(-30, 55, 35);
@@ -54,7 +55,7 @@ interface SceneProps {
   shadowSize: number;
 }
 
-/** Bhaktapur Durbar Square, Taumadhi and Swayambhunath, on a clear afternoon. */
+/** Bhaktapur Durbar Square, Taumadhi, Swayambhunath and Pokhara, on a clear afternoon. */
 export default function Scene({ ready, shadowSize }: SceneProps) {
   return (
     <>
@@ -65,6 +66,7 @@ export default function Scene({ ready, shadowSize }: SceneProps) {
       <Environment />
       <Houses />
       <Monuments />
+      <Pokhara />
       <Destinations />
       <Npcs />
       <Car />

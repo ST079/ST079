@@ -64,7 +64,7 @@ function spanBetween(mesh: THREE.Object3D, a: THREE.Vector3, b: THREE.Vector3) {
 }
 
 /** A round tube between two points (frames, forks, arms). */
-function Tube({ from, to, radius = 0.025, color, roughness = 0.5 }: { from: V3; to: V3; radius?: number; color: string; roughness?: number }) {
+export function Tube({ from, to, radius = 0.025, color, roughness = 0.5 }: { from: V3; to: V3; radius?: number; color: string; roughness?: number }) {
   const { position, quaternion, length } = useMemo(() => {
     const a = new THREE.Vector3(...from);
     const b = new THREE.Vector3(...to);
@@ -120,7 +120,7 @@ function Leg({ hip, foot, length = 0.47, color }: { hip: V3; foot: () => THREE.V
   );
 }
 
-interface RiderProps {
+export interface RiderProps {
   hips: V3;
   shoulders: V3;
   head: V3;
@@ -136,7 +136,7 @@ interface RiderProps {
   legLength?: number;
 }
 
-function Rider({ hips, shoulders, head, hands, feet, shirt, pants, helmet, fullFace, legLength }: RiderProps) {
+export function Rider({ hips, shoulders, head, hands, feet, shirt, pants, helmet, fullFace, legLength }: RiderProps) {
   return (
     <group>
       <Tube from={hips} to={shoulders} radius={0.14} color={shirt} roughness={0.9} />
@@ -478,7 +478,40 @@ function BicycleFork() {
 
 const CAR = { wheelbase: 2.3, maxSpeed: 16, radius: 1.5 };
 
+// The bicycle comes first: it is everyone's first ride (see store.ts).
 export const VEHICLES: VehicleSpec[] = [
+  {
+    id: "bicycle",
+    name: "Bicycle",
+    color: "#1d7a8c",
+    Body: Bicycle,
+    Fork: BicycleFork,
+    wheelbase: CYCLE.front - CYCLE.rear,
+    maxSpeed: 11,
+    radius: 0.8,
+    twoWheeler: true,
+    chase: 0.7,
+    wheels: [
+      { x: 0, z: CYCLE.front, radius: CYCLE.radius, front: true, spoked: true },
+      { x: 0, z: CYCLE.rear, radius: CYCLE.radius, front: false, spoked: true },
+    ],
+  },
+  {
+    id: "motorbike",
+    name: "Motorbike",
+    color: BIKE_RED,
+    Body: Motorbike,
+    Fork: MotorbikeFork,
+    wheelbase: MOTO.front - MOTO.rear,
+    maxSpeed: 19,
+    radius: 0.9,
+    twoWheeler: true,
+    chase: 0.8,
+    wheels: [
+      { x: 0, z: MOTO.front, radius: MOTO.radius, front: true, width: 0.15 },
+      { x: 0, z: MOTO.rear, radius: MOTO.radius, front: false, width: 0.17 },
+    ],
+  },
   {
     id: "hatchback",
     name: "Hatchback",
@@ -528,38 +561,6 @@ export const VEHICLES: VehicleSpec[] = [
       { x: 0, z: 1.45, radius: 0.32, front: true },
       { x: 0.74, z: -1.1, radius: 0.34, front: false },
       { x: -0.74, z: -1.1, radius: 0.34, front: false },
-    ],
-  },
-  {
-    id: "motorbike",
-    name: "Motorbike",
-    color: BIKE_RED,
-    Body: Motorbike,
-    Fork: MotorbikeFork,
-    wheelbase: MOTO.front - MOTO.rear,
-    maxSpeed: 19,
-    radius: 0.9,
-    twoWheeler: true,
-    chase: 0.8,
-    wheels: [
-      { x: 0, z: MOTO.front, radius: MOTO.radius, front: true, width: 0.15 },
-      { x: 0, z: MOTO.rear, radius: MOTO.radius, front: false, width: 0.17 },
-    ],
-  },
-  {
-    id: "bicycle",
-    name: "Bicycle",
-    color: "#1d7a8c",
-    Body: Bicycle,
-    Fork: BicycleFork,
-    wheelbase: CYCLE.front - CYCLE.rear,
-    maxSpeed: 9,
-    radius: 0.8,
-    twoWheeler: true,
-    chase: 0.7,
-    wheels: [
-      { x: 0, z: CYCLE.front, radius: CYCLE.radius, front: true, spoked: true },
-      { x: 0, z: CYCLE.rear, radius: CYCLE.radius, front: false, spoked: true },
     ],
   },
 ];

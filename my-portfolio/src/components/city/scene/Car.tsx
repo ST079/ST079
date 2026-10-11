@@ -7,8 +7,8 @@ import * as THREE from "three";
 import {
   destinationById,
   destinations,
-  DRIVABLE,
   LANE_OFFSET,
+  nearestDrivable,
   planRoute,
   solids,
   type DestinationId,
@@ -155,23 +155,9 @@ function collide(radius: number) {
       else car.z = center[1] + Math.sign(car.z - center[1] || 1) * (hz + radius);
     }
   }
-  // Stay in the drivable areas: if outside all of them, come back to the
-  // nearest point of the nearest one.
-  let nearest: [number, number] | null = null;
-  let nearestDistance = Infinity;
-  for (const [x0, x1, z0, z1] of DRIVABLE) {
-    const x = clamp(car.x, x0, x1);
-    const z = clamp(car.z, z0, z1);
-    const d = Math.hypot(car.x - x, car.z - z);
-    if (d === 0) {
-      nearest = null;
-      break;
-    }
-    if (d < nearestDistance) {
-      nearestDistance = d;
-      nearest = [x, z];
-    }
-  }
+  // Stay on the drivable ground (the paving, the roads and the cycle path
+  // round the lake): if off it, come back to the nearest point on it.
+  const nearest = nearestDrivable(car.x, car.z);
   if (nearest) {
     hit = true;
     [car.x, car.z] = nearest;

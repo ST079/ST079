@@ -5,12 +5,13 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useCursor } from "@react-three/drei";
 import * as THREE from "three";
 
-import { destinations, HILL, LANDMARKS, type Destination, type DestinationId, type Vec2 } from "../layout";
+import { destinations, HILL, ISLAND, LANDMARKS, type Destination, type DestinationId, type Vec2 } from "../layout";
 import { cityStore, driveTo } from "../store";
 import NewaHome from "./buildings/NewaHome";
 import Nyatapola from "./buildings/Nyatapola";
 import Palace from "./buildings/Palace";
-import { GreatStupa, PrayerWheelWall, VajraStairway } from "./buildings/Swayambhu";
+import { GreatStupa, VajraStairway } from "./buildings/Swayambhu";
+import TalBarahi from "./buildings/TalBarahi";
 
 // Each destination's landmark, where it stands, and which way its front faces
 // (buildings are modelled facing +z; rotations turn them towards their spot).
@@ -23,7 +24,8 @@ const BUILDINGS: Record<DestinationId, { Model: ComponentType; at: Vec2; rotatio
   // Swayambhunath
   skills: { Model: VajraStairway, at: HILL.center, rotation: 0 }, // climbs the east side
   education: { Model: GreatStupa, at: HILL.center, rotation: 0 },
-  contact: { Model: PrayerWheelWall, at: LANDMARKS.prayerWheels.center, rotation: Math.PI }, // faces north
+  // Pokhara
+  contact: { Model: TalBarahi, at: ISLAND.center, rotation: Math.PI / 2 }, // faces east, to Lakeside
 };
 
 /** A soft painted circle where the car parks; it brightens while parked there. */
@@ -78,7 +80,7 @@ function Place({ d }: { d: Destination }) {
   );
 }
 
-/** The six portfolio landmarks, three in each place, and their parking spots (signs: see ../signs.tsx). */
+/** The six portfolio landmarks (three in Bhaktapur, two at Swayambhunath, one at Phewa Lake) and their parking spots (signs: see ../signs.tsx). */
 export default function Destinations() {
   return (
     <>

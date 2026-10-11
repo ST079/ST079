@@ -29,7 +29,8 @@ const initialState: CityState = {
   dismissed: null,
   driving: null,
   started: false,
-  vehicle: "hatchback",
+  // Everyone starts on the bicycle (a returning visitor gets their last pick).
+  vehicle: "bicycle",
 };
 
 let state = initialState;

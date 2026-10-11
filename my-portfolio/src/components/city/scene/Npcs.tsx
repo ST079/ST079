@@ -4,13 +4,30 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-import { HILL, isOpen, LANDMARKS, PAVED, seeded, solids, type Vec2 } from "../layout";
+import {
+  BENCH_SEAT,
+  HILL,
+  inFrame,
+  isOpen,
+  LAKE_BENCHES,
+  LAKESIDE,
+  LAKESIDE_BENCHES,
+  LANDMARKS,
+  PAVED,
+  PROMENADE_WALK,
+  seeded,
+  solids,
+  STALLS,
+  type Rect,
+  type Vec2,
+} from "../layout";
 import { townSound } from "../audio";
 import { car } from "../store";
 
 // Life in the squares: tourists wandering between temples (and a few sitting
-// on Nyatapola's steps), street dogs, cats, Swayambhunath's monkeys and flocks
-// of pigeons. Everyone gets out of the way of the car.
+// on Nyatapola's steps or the benches round Phewa Lake, and queueing at its
+// food stalls), street dogs, cats, Swayambhunath's monkeys and flocks of
+// pigeons. Everyone gets out of the way of the car.
 //
 // Each kind is a small "rig" of parts. Every part is one InstancedMesh shared
 // by all characters of that kind, posed per frame, so the whole crowd costs a
@@ -38,6 +55,10 @@ interface Agent {
   scale: number;
   /** Seated for good (tourists on the temple steps). */
   fixed: boolean;
+  /** Somewhere they stay (queueing at a stall), going back after getting out of the car's way. */
+  home?: Vec2;
+  /** What they look at there. */
+  look?: Vec2;
   /** Raises a camera while pausing at a temple. */
   photographer: boolean;
   hat: 0 | 1 | 2;
@@ -76,11 +97,25 @@ const RUN: Record<Kind, number> = { tourist: 3.4, dog: 5, cat: 5.5 };
 
 const landmarkCenters = Object.values(LANDMARKS).map((l) => l.center as Vec2);
 
+// Visitors at Lakeside keep to the waterside walk, off the cycle lanes.
+const LAKESIDE_REGION = PAVED.indexOf(LAKESIDE);
+const WANDER: Record<number, Rect> = { [LAKESIDE_REGION]: PROMENADE_WALK };
+
+/** Keeps a point inside the strip a region's characters are limited to, if any. */
+function keepIn(region: number, x: number, z: number): Vec2 {
+  const bounds = WANDER[region];
+  if (!bounds) return [x, z];
+  return [THREE.MathUtils.clamp(x, bounds[0], bounds[1]), THREE.MathUtils.clamp(z, bounds[2], bounds[3])];
+}
+
 function randomOpenPoint(rand: () => number, region: number, near?: Vec2, radius = 14): Vec2 {
-  const [x0, x1, z0, z1] = PAVED[region];
+  const [x0, x1, z0, z1] = WANDER[region] ?? PAVED[region];
   for (let i = 0; i < 40; i++) {
-    const x = near ? near[0] + (rand() * 2 - 1) * radius : x0 + rand() * (x1 - x0);
-    const z = near ? near[1] + (rand() * 2 - 1) * radius : z0 + rand() * (z1 - z0);
+    const [x, z] = keepIn(
+      region,
+      near ? near[0] + (rand() * 2 - 1) * radius : x0 + rand() * (x1 - x0),
+      near ? near[1] + (rand() * 2 - 1) * radius : z0 + rand() * (z1 - z0),
+    );
     if (isOpen(x, z, 1.2)) return [x, z];
   }
   return near ?? [(x0 + x1) / 2, (z0 + z1) / 2];
@@ -172,6 +207,46 @@ function createAgents() {
     });
   }
 
+  // Pokhara: strolling along the lake, and a few sat on the benches watching it
+  for (let i = 0; i < 9; i++) add("tourist", LAKESIDE_REGION);
+  for (const [x, z] of LAKESIDE_BENCHES.filter((_, i) => i % 2 === 0)) {
+    for (const dz of [-0.45, 0.45]) {
+      add("tourist", LAKESIDE_REGION, [x + 0.08, z + dz], {
+        fixed: true,
+        mode: "sit",
+        y: BENCH_SEAT - 0.82,
+        yaw: -Math.PI / 2,
+        photographer: false,
+      });
+    }
+  }
+  // ...kids out with their families,
+  for (let i = 0; i < 4; i++) add("tourist", LAKESIDE_REGION, undefined, { scale: 0.58 + rand() * 0.08, hat: 0, backpack: false, photographer: false });
+  // ...people on the benches all round the lake, looking out over the water,
+  LAKE_BENCHES.forEach((bench, i) => {
+    if (i % 2) return;
+    for (const across of i % 4 ? [0] : [-0.45, 0.45]) {
+      add("tourist", LAKESIDE_REGION, inFrame(bench, across, -0.08), {
+        fixed: true,
+        mode: "sit",
+        y: BENCH_SEAT - 0.82,
+        yaw: Math.atan2(bench.facing[0], bench.facing[1]),
+        photographer: false,
+      });
+    }
+  });
+  // ...a cook behind every food stall, and people waiting at the counter,
+  for (const stall of STALLS) {
+    const yaw = Math.atan2(stall.facing[0], stall.facing[1]);
+    add("tourist", LAKESIDE_REGION, inFrame(stall, 0, -0.1), { fixed: true, mode: "pause", yaw, photographer: false, hat: 0, backpack: false });
+    for (const across of rand() < 0.5 ? [-0.5, 0.6] : [0.2]) {
+      const home = inFrame(stall, across, 1.5);
+      add("tourist", LAKESIDE_REGION, home, { home, look: stall.at, mode: "pause", timer: Infinity, target: stall.at, yaw: yaw + Math.PI, photographer: false });
+    }
+  }
+  // ...and a dog asleep in the sun by the water
+  add("dog", LAKESIDE_REGION, [-299.4, -6], { mode: "pause", timer: 40, yaw: 0.4 });
+
   return agents;
 }
 
@@ -230,8 +305,13 @@ function step(a: Agent, dt: number, rand: () => number) {
   const ahead = Math.sin(car.heading) * -dxCar + Math.cos(car.heading) * -dzCar < 0; // car moving towards us
   if (dCar < 6.5 && Math.abs(car.speed) > 0.8 && (ahead || dCar < 3.5) && a.mode !== "flee") {
     const away = Math.atan2(dxCar, dzCar) + (rand() - 0.5) * 1.2;
-    const [tx, tz] = [a.x + Math.sin(away) * 7, a.z + Math.cos(away) * 7];
-    a.target = isOpen(tx, tz, 0.8) ? [tx, tz] : randomOpenPoint(rand, a.region, [a.x, a.z], 9);
+    if (a.home) {
+      // Just step aside (off the paving, so no wandering off), then go back.
+      a.target = [a.x + Math.sin(away) * 4, a.z + Math.cos(away) * 4];
+    } else {
+      const [tx, tz] = keepIn(a.region, a.x + Math.sin(away) * 7, a.z + Math.cos(away) * 7);
+      a.target = isOpen(tx, tz, 0.8) ? [tx, tz] : randomOpenPoint(rand, a.region, [a.x, a.z], 9);
+    }
     a.mode = "flee";
     a.timer = 2.5;
   }
@@ -255,11 +335,19 @@ function step(a: Agent, dt: number, rand: () => number) {
     if (d < 0.45 || a.blocked > 1.2 || (a.mode === "flee" && a.timer <= 0)) {
       a.speed = 0;
       a.blocked = 0;
+      if (a.home) {
+        // Back to their place (and stay there), or walk back to it first.
+        const atHome = Math.hypot(a.home[0] - a.x, a.home[1] - a.z) < 0.6;
+        a.mode = atHome ? "pause" : "walk";
+        a.timer = atHome ? Infinity : 6;
+        a.target = atHome ? (a.look ?? a.home) : a.home;
+        return;
+      }
       a.mode = a.kind === "cat" ? "sit" : "pause";
       a.timer = a.kind === "tourist" ? 2 + rand() * 5 : a.kind === "dog" ? 3 + rand() * 9 : 5 + rand() * 10;
       if (a.kind === "tourist") {
-        const [lx, lz] = nearestLandmark(a.x, a.z);
-        a.target = [lx, lz];
+        // At Lakeside they look out over the water; elsewhere at the nearest temple.
+        a.target = a.region === LAKESIDE_REGION ? [a.x - 20, a.z] : nearestLandmark(a.x, a.z);
       }
     }
   } else {
